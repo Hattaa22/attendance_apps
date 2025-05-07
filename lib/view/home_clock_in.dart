@@ -18,17 +18,390 @@ class _HomeClockInScreenState extends State<HomeClockInScreen> {
 
   bool isClockedIn = false;
 
+  // Method untuk menampilkan pop up Clock In
+  void _showClockInAttendanceDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black, width: 5),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title di tengah
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 40),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          'CLOCK IN ATTENDANCE',
+                          style: GoogleFonts.roboto(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // One Click Card
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        _showOneClickConfirmationDialog();
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        color: greenMainColor,
+                        child: Container(
+                          width: 100,
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            children: [
+                              Image.asset(
+                                'assets/icon/clock-icon.png',
+                                width: 40,
+                                height: 40,
+                                color: whiteMainColor,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'One Click',
+                                style: GoogleFonts.roboto(
+                                  fontWeight: FontWeight.bold,
+                                  color: whiteMainColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // QR Code Card
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        _showQrCodeScannerDialog();
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        color: blueMainColor,
+                        child: Container(
+                          width: 100,
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            children: [
+                              Image.asset(
+                                'assets/icon/scan-barcode.png',
+                                width: 40,
+                                height: 40,
+                                color: whiteMainColor,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'QR Code',
+                                style: GoogleFonts.roboto(
+                                  fontWeight: FontWeight.bold,
+                                  color: whiteMainColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Method untuk menampilkan pop up One Click - Clock In
+  void _showOneClickConfirmationDialog() {
+    final now = DateTime.now();
+    final timeFormatter = DateFormat('hh:mm a');
+    final formattedTime = timeFormatter.format(now);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black, width: 5),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                        width: 48), // Ruang kosong sebagai penyeimbang tombol X
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          'CLOCK IN ABSENSI',
+                          style: GoogleFonts.roboto(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Clock icon
+                Container(
+                  width: 100,
+                  height: 100,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/icon/timer-start-big-icon.png',
+                      width: 100,
+                      height: 100,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Are Sure Clock In this $formattedTime ?',
+                  style: GoogleFonts.roboto(
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                // Confirmation buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // No button
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: greenMainColor),
+                        minimumSize: Size(100, 40),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        'No',
+                        style: GoogleFonts.roboto(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    // Yes button
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: greenMainColor,
+                        minimumSize: Size(100, 40),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isClockedIn = true;
+                        });
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(
+                        'Yes!',
+                        style: GoogleFonts.roboto(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Method untuk menampilkan pop up QR Code - Clock In
+  void _showQrCodeScannerDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: double.infinity,
+            height: 500,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // QR Scanner frame
+                Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Top left corner
+                      Positioned(
+                        top: 16,
+                        left: 16,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            border: Border(
+                              top: BorderSide(color: Colors.white, width: 2),
+                              left: BorderSide(color: Colors.white, width: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Top right corner
+                      Positioned(
+                        top: 16,
+                        right: 16,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            border: Border(
+                              top: BorderSide(color: Colors.white, width: 2),
+                              right: BorderSide(color: Colors.white, width: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Bottom left corner
+                      Positioned(
+                        bottom: 16,
+                        left: 16,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Colors.white, width: 2),
+                              left: BorderSide(color: Colors.white, width: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Bottom right corner
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Colors.white, width: 2),
+                              right: BorderSide(color: Colors.white, width: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // QR code boxes in the center
+                      Center(
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          child: GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            children: List.generate(4, (index) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.white, width: 1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Get current date for the header
     final now = DateTime.now();
     final dateFormatter = DateFormat('E, MMM d yyyy');
     final formattedDate = dateFormatter.format(now);
 
-    // Get device size to make UI responsive
+    // Set agar dinamis menyesuaikan ukuran layar
     final size = MediaQuery.of(context).size;
 
-    // Setup default text theme with Roboto font
+    // Set default font
     final textTheme = GoogleFonts.robotoTextTheme(Theme.of(context).textTheme);
 
     return Scaffold(
@@ -222,10 +595,8 @@ class _HomeClockInScreenState extends State<HomeClockInScreen> {
                                                 color: greenMainColor,
                                                 child: InkWell(
                                                   onTap: () {
-                                                    setState(() {
-                                                      isClockedIn = true;
-                                                    });
-                                                    // Handle clock in action
+                                                    // Panggil Fungsi untuk menampilkan pop up Clock In
+                                                    _showClockInAttendanceDialog();
                                                   },
                                                   child: Container(
                                                     width: 90,
@@ -301,14 +672,9 @@ class _HomeClockInScreenState extends State<HomeClockInScreen> {
                                                     ? greenMainColor
                                                     : Colors.grey[400],
                                                 child: InkWell(
-                                                  onTap: isClockedIn
-                                                      ? () {
-                                                          setState(() {
-                                                            isClockedIn = false;
-                                                          });
-                                                          // Handle clock out action
-                                                        }
-                                                      : null,
+                                                  onTap: () {
+                                                    // Panggil Fungsi untuk menampilkan pop up Clock Out
+                                                  },
                                                   child: Container(
                                                     width: 90,
                                                     height: 90,
@@ -452,10 +818,8 @@ class _HomeClockInScreenState extends State<HomeClockInScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildNavItem(
-                        'assets/icon/home-icon.png', 'HOME', true),
-                    _buildNavItem(
-                        'assets/icon/leave-icon.png', 'LEAVE', false),
+                    _buildNavItem('assets/icon/home-icon.png', 'HOME', true),
+                    _buildNavItem('assets/icon/leave-icon.png', 'LEAVE', false),
                     _buildNavItem(
                         'assets/icon/calendar-icon.png', 'CALENDAR', false),
                     _buildNavItem(
@@ -478,7 +842,7 @@ class _HomeClockInScreenState extends State<HomeClockInScreen> {
           assetPath,
           width: 30,
           height: 30,
-          color: whiteMainColor, // jika ingin warnanya putih
+          color: whiteMainColor,
         ),
         const SizedBox(height: 4),
         Text(
