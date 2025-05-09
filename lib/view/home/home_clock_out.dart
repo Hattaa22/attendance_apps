@@ -22,7 +22,7 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
   bool isClockedIn = false;
 
   // Method untuk menampilkan pop up Clock In
-  void _showClockInAttendanceDialog() {
+  void _showClockOutAttendanceDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -180,7 +180,7 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                     Expanded(
                       child: Center(
                         child: Text(
-                          'CLOCK IN ABSENSI',
+                          'CLOCK Out ABSENSI',
                           style: GoogleFonts.roboto(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -199,12 +199,12 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                 ),
                 const SizedBox(height: 20),
                 // Clock icon
-                Container(
+                SizedBox(
                   width: 100,
                   height: 100,
                   child: Center(
                     child: Image.asset(
-                      'assets/icon/timer-start-big-icon.png',
+                      'assets/icon/timer-pause-big-icon.png',
                       width: 100,
                       height: 100,
                       color: Colors.black,
@@ -213,7 +213,7 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Are Sure Clock In this $formattedTime ?',
+                  'Are Sure Clock Out this $formattedTime ?',
                   style: GoogleFonts.roboto(
                     fontSize: 16,
                   ),
@@ -410,102 +410,280 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // User Profile Card
-                    Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Container(
-                        width: double.infinity,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(30, 14, 30, 14),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: blueMainColor,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      // User avatar
+                      Container(
+                        padding: const EdgeInsets.all(2), // border thickness
                         decoration: BoxDecoration(
-                          color: blueMainColor,
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white, // border color
+                          shape: BoxShape.circle,
+                        ),
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundImage: const AssetImage(
+                              'assets/images/default-profile.png'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // User information
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Image.asset(
+                                  'assets/icon/profile-2user-icon.png',
+                                  width: 20,
+                                  height: 20,
+                                  color: whiteMainColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  userName,
+                                  style: GoogleFonts.roboto(
+                                    color: whiteMainColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Image.asset(
+                                  'assets/icon/personalcard-icon.png',
+                                  width: 20,
+                                  height: 20,
+                                  color: whiteMainColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  userID,
+                                  style: GoogleFonts.roboto(
+                                    color: whiteMainColor,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Image.asset(
+                                  'assets/icon/email-icon.png',
+                                  width: 20,
+                                  height: 20,
+                                  color: whiteMainColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    userEmail,
+                                    style: GoogleFonts.roboto(
+                                      color: whiteMainColor,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Clock In/Out Card
+            Padding(
+              padding: const EdgeInsets.fromLTRB(30, 0, 30, 8),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: blueMainColor,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 15, 8, 8),
+                  child: Column(
+                    children: [
+                      // Date display
+                      Text(
+                        formattedDate,
+                        style: GoogleFonts.roboto(
+                          color: whiteMainColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Clock In/Out section
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(15),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(8.0),
                           child: Row(
                             children: [
-                              // User avatar
-                              Container(
-                                padding:
-                                    const EdgeInsets.all(2), // border thickness
-                                decoration: BoxDecoration(
-                                  color: Colors.white, // border color
-                                  shape: BoxShape.circle,
-                                ),
-                                child: CircleAvatar(
-                                  radius: 40,
-                                  backgroundImage: const AssetImage(
-                                      'assets/images/default-profile.png'),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              // User information
+                              // Clock In column
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Image.asset(
-                                          'assets/icon/profile-2user-icon.png',
-                                          width: 20,
-                                          height: 20,
-                                          color: whiteMainColor,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          userName,
-                                          style: GoogleFonts.roboto(
-                                            color: whiteMainColor,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ],
+                                    Text(
+                                      'Clock In:',
+                                      style: GoogleFonts.roboto(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                      ),
                                     ),
-                                    const SizedBox(height: 10),
-                                    Row(
-                                      children: [
-                                        Image.asset(
-                                          'assets/icon/personalcard-icon.png',
-                                          width: 20,
-                                          height: 20,
-                                          color: whiteMainColor,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          userID,
-                                          style: GoogleFonts.roboto(
-                                            color: whiteMainColor,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '08:00 AM',
+                                      style: GoogleFonts.roboto(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                    const SizedBox(height: 10),
-                                    Row(
-                                      children: [
-                                        Image.asset(
-                                          'assets/icon/email-icon.png',
-                                          width: 20,
-                                          height: 20,
-                                          color: whiteMainColor,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Flexible(
-                                          child: Text(
-                                            userEmail,
-                                            style: GoogleFonts.roboto(
-                                              color: whiteMainColor,
-                                              fontSize: 14,
+                                    const SizedBox(height: 8),
+                                    // Clock In button
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: Material(
+                                        color: Colors.grey[400],
+                                        child: InkWell(
+                                          onTap: () {
+                                            
+                                          },
+                                          child: Container(
+                                            width: 90,
+                                            height: 90,
+                                            alignment: Alignment.center,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 8),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Image.asset(
+                                                  'assets/images/timer-start.png',
+                                                  width: 50,
+                                                  height: 50,
+                                                  color: whiteMainColor,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Clock In',
+                                                  style: GoogleFonts.roboto(
+                                                    color: whiteMainColor,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                      ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Clock Out column
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'Clock Out:',
+                                      style: GoogleFonts.roboto(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '17:31 PM',
+                                      style: GoogleFonts.roboto(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Clock Out button
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: Material(
+                                        color: isClockedIn
+                                            ? Colors.grey[400]
+                                            : greenMainColor,
+                                        child: InkWell(
+                                          onTap: () {
+                                            // Panggil Fungsi untuk menampilkan pop up Clock In
+                                            _showClockOutAttendanceDialog();
+                                          },
+                                          child: Container(
+                                            width: 90,
+                                            height: 90,
+                                            alignment: Alignment.center,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 8),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Image.asset(
+                                                  'assets/images/timer-end.png',
+                                                  width: 50,
+                                                  height: 50,
+                                                  color: whiteMainColor,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Clock Out',
+                                                  style: TextStyle(
+                                                    color: whiteMainColor,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -514,270 +692,77 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                           ),
                         ),
                       ),
-                    ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
-                    // Clock In/Out Card
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: blueMainColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            children: [
-                              // Date display
-                              Text(
-                                formattedDate,
-                                style: GoogleFonts.roboto(
-                                  color: whiteMainColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              // Clock In/Out section
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Row(
-                                    children: [
-                                      // Clock In column
-                                      Expanded(
-                                        child: Column(
-                                          children: [
-                                            Text(
-                                              'Clock In:',
-                                              style: GoogleFonts.roboto(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '08:00 AM',
-                                              style: GoogleFonts.roboto(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            // Clock In button
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              child: Material(
-                                                color: greenMainColor,
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    // Panggil Fungsi untuk menampilkan pop up Clock In
-                                                    _showClockInAttendanceDialog();
-                                                  },
-                                                  child: Container(
-                                                    width: 90,
-                                                    height: 90,
-                                                    alignment: Alignment.center,
-                                                    padding: const EdgeInsets
-                                                        .symmetric(vertical: 8),
-                                                    child: Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Image.asset(
-                                                          'assets/images/timer-start.png',
-                                                          width: 50,
-                                                          height: 50,
-                                                          color: whiteMainColor,
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 4),
-                                                        Text(
-                                                          'Clock In',
-                                                          style: GoogleFonts
-                                                              .roboto(
-                                                            color:
-                                                                whiteMainColor,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontSize: 14,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      // Vertical divider
-                                      Container(
-                                        height: 100,
-                                        width: 1,
-                                        color: Colors.grey[400],
-                                      ),
-                                      // Clock Out column
-                                      Expanded(
-                                        child: Column(
-                                          children: [
-                                            Text(
-                                              'Clock Out:',
-                                              style: GoogleFonts.roboto(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '17:31 PM',
-                                              style: GoogleFonts.roboto(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            // Clock Out button
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              child: Material(
-                                                color: isClockedIn
-                                                    ? greenMainColor
-                                                    : Colors.grey[400],
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    // Panggil Fungsi untuk menampilkan pop up Clock Out
-                                                  },
-                                                  child: Container(
-                                                    width: 90,
-                                                    height: 90,
-                                                    alignment: Alignment.center,
-                                                    child: Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Image.asset(
-                                                          'assets/images/timer-end.png',
-                                                          width: 50,
-                                                          height: 50,
-                                                          color: whiteMainColor,
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 4),
-                                                        Text(
-                                                          'Clock Out',
-                                                          style: TextStyle(
-                                                            color: isClockedIn
-                                                                ? whiteMainColor
-                                                                : Colors
-                                                                    .grey[600],
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontSize: 14,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Health Notice Card
-                    Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: blueMainColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.warning_amber_rounded,
-                                    color: whiteMainColor,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Remember to keep your distance and wear mask',
-                                      style: GoogleFonts.roboto(
-                                        color: whiteMainColor,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'More info:',
-                                style: GoogleFonts.roboto(
-                                  color: whiteMainColor,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              Text(
-                                'help@salvus.co.id',
-                                style: GoogleFonts.roboto(
-                                  color: whiteMainColor,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'by',
-                          style: GoogleFonts.roboto(
-                            color: Colors.black,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        Image.asset(
-                          'assets/logo/salvus-logo.png',
-                          width: 100,
-                        ),
-                      ],
-                    ),
+            // Health Notice Card
+            Padding(
+              padding: const EdgeInsets.fromLTRB(30, 0, 30, 17),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: blueMainColor,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, 4),
+                    )
                   ],
                 ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: whiteMainColor,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Remember to keep your distance and wear mask',
+                              style: GoogleFonts.roboto(
+                                color: whiteMainColor,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'More info:',
+                        style: GoogleFonts.roboto(
+                          color: whiteMainColor,
+                          fontSize: 10,
+                        ),
+                      ),
+                      Text(
+                        'help@salvus.co.id',
+                        style: GoogleFonts.roboto(
+                          color: whiteMainColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Center(
+              child: Image.asset(
+                'assets/logo/salvus-logo.png',
+                height: 37,
               ),
             ),
           ],
