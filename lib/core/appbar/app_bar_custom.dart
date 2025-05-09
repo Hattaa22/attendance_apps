@@ -13,7 +13,7 @@ class AppBarCustom extends StatelessWidget {
         children: [
           Image.asset(
             'assets/images/logo-fortis.png',
-            height: 50,
+            height: 37,
             fit: BoxFit.cover,
           ),
           IconButton(

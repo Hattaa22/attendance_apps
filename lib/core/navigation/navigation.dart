@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fortis_apps/core/color/colors.dart';
 
 class Navigation extends StatelessWidget {
   // final int currentIndex;
@@ -14,14 +15,14 @@ class Navigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'HOME'),
+        BottomNavigationBarItem(icon: ImageIcon(AssetImage('assets/icon/home-icon.png')), label: 'HOME'),
         BottomNavigationBarItem(
-            icon: Icon(Icons.logout_rounded), label: 'LEAVE'),
-        BottomNavigationBarItem(icon: Icon(Icons.calendar_today_rounded), label: 'CALENDER'),
+            icon: ImageIcon(AssetImage('assets/icon/leave-icon.png')), label: 'LEAVE'),
+        BottomNavigationBarItem(icon: ImageIcon(AssetImage('assets/icon/calendar-icon.png')), label: 'CALENDER'),
         BottomNavigationBarItem(
-            icon: Icon(Icons.checklist_rounded), label: 'TIMESHEET'),
+            icon: ImageIcon(AssetImage('assets/icon/timesheet-icon.png')), label: 'TIMESHEET'),
       ],
-      backgroundColor: Colors.lightBlue.shade900,
+      backgroundColor: blueMainColor,
       // selectedItemColor:
       //     currentIndex == -1 ? Colors.white : Colors.black,
       selectedItemColor: Colors.black,
