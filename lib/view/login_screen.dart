@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MaterialApp(
-    home: LoginScreen(),
-    debugShowCheckedModeBanner: false,
-  ));
-}
+void main() => runApp(
+  MaterialApp(
+    home: LoginScreen(), 
+    debugShowCheckedModeBanner: false
+    ),
+  );
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,8 +15,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   final String _dummyUsername = 'admin';
   final String _dummyPassword = '1234';
@@ -24,10 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMessage;
 
   void _handleLogin() {
-    String username = _usernameController.text;
-    String password = _passwordController.text;
-
-    if (username == _dummyUsername && password == _dummyPassword) {
+    if (_usernameController.text == _dummyUsername &&
+        _passwordController.text == _dummyPassword) {
       print("Login");
       setState(() {
         _errorMessage = null;
@@ -41,76 +39,113 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Image.asset('assets/logo.png', height: 100), // Ganti sesuai kebutuhan
-            ),
+      body: Column(
+        children: [
+          SizedBox(height: screenHeight * 0.02),
 
-            // Sign In Text
-            Text(
-              'Sign In',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+          // Logo
+          Image.network('https://mir-s3-cdn-cf.behance.net/projects/404/f790db206882689.Y3JvcCwxMzgwLDEwODAsMjcwLDA.png', height: 180), // Tambah asset logomu di sini
 
-            SizedBox(height: 30),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'User Name',
-                  hintText: 'Insert User Name',
-                  prefixIcon: Icon(Icons.person),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-
-            SizedBox(height: 20),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  hintText: 'Insert Password',
-                  prefixIcon: Icon(Icons.key),
-                  suffixIcon: Icon(Icons.visibility_off),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-
-            if (_errorMessage != null) ...[
-              SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_outline, size: 32, color: Colors.grey[700]),
+              SizedBox(width: 10),
               Text(
-                _errorMessage!,
-                style: TextStyle(color: Colors.red),
-              ),
+                "Sign In", 
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold, 
+                  color: Colors.black87
+                  )
+                ),
             ],
+          ),
 
-            SizedBox(height: 30),
+          SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: _handleLogin,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: EdgeInsets.symmetric(horizontal: 100, vertical: 15),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(24),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Color(0xFF2E59A7),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                ),
               ),
-              child: Text("LOGIN", style: TextStyle(color: Colors.white)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Username field
+                  TextField(
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      labelText: 'User Name',
+                      hintText: 'Insert User Name',
+                      prefixIcon: Icon(Icons.person),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  // Password field
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      labelText: 'Password',
+                      hintText: 'Insert Password',
+                      prefixIcon: Icon(Icons.key),
+                      suffixIcon: Icon(Icons.visibility_off),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+
+                  if (_errorMessage != null) ...[
+                    SizedBox(height: 10),
+                    Text(
+                      _errorMessage!,
+                      style: TextStyle(color: Colors.red[200], fontSize: 14),
+                    ),
+                  ],
+
+                  SizedBox(height: 56),
+
+                  // Login Button
+                  ElevatedButton(
+                    onPressed: _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[700],
+                      minimumSize: Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      "LOGIN",
+                      style: TextStyle(color: Colors.white, fontSize: 16, letterSpacing: 1),
+                    ),
+                  )
+                ],
+              ),
             ),
-          ],
-        ),
+          )
+        ],
       ),
     );
   }
