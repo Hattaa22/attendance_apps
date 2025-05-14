@@ -720,6 +720,7 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                   child: Column(
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(
                             Icons.warning_amber_rounded,
@@ -727,13 +728,11 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                             size: 20,
                           ),
                           const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Remember to keep your distance and wear mask',
-                              style: GoogleFonts.roboto(
-                                color: whiteMainColor,
-                                fontSize: 10,
-                              ),
+                          Text(
+                            'Remember to keep your distance and wear mask',
+                            style: GoogleFonts.roboto(
+                              color: whiteMainColor,
+                              fontSize: 10,
                             ),
                           ),
                         ],
