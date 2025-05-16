@@ -3,8 +3,8 @@ import 'package:fortis_apps/core/navigation/navigation.dart';
 import 'package:intl/intl.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:fortis_apps/core/navigation/navigation.dart';
 import 'package:fortis_apps/core/appbar/app_bar_custom.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class HomeClockOutScreen extends StatefulWidget {
   const HomeClockOutScreen({super.key});
@@ -39,32 +39,35 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Title di tengah
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(width: 40),
+                    const SizedBox(width: 24),
                     Expanded(
                       child: Center(
                         child: Text(
-                          'CLOCK IN ATTENDANCE',
+                          'CLOCK OUT ATTENDANCE',
                           style: GoogleFonts.roboto(
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 15,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    SizedBox(
+                      width: 24,
+                      child: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -149,6 +152,121 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
     );
   }
 
+  void _showQrCodeScannerDialog() {
+    final MobileScannerController cameraController = MobileScannerController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: double.infinity,
+            height: 350,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: MobileScanner(
+                                controller: cameraController,
+                                onDetect: (capture) {
+                                  final List<Barcode> barcodes =
+                                      capture.barcodes;
+                                  for (final barcode in barcodes) {
+                                    if (barcode.rawValue != null) {
+                                      cameraController.dispose();
+                                      Navigator.pop(context);
+                                      setState(() {
+                                        isClockedIn = true;
+                                      });
+                                      _showClockOutAttendanceDialog();
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                            // QR Code overlay
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ImageIcon(
+                                  AssetImage('assets/icon/scan-barcode.png'),
+                                  color: Colors.white,
+                                  size: 150,
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Scan QR Code',
+                            style: GoogleFonts.roboto(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Align QR code within the frame',
+                            style: GoogleFonts.roboto(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                // Close button
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      cameraController.dispose();
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   // Method untuk menampilkan pop up One Click - Clock In
   void _showOneClickConfirmationDialog() {
     final now = DateTime.now();
@@ -176,11 +294,11 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(
-                        width: 48), // Ruang kosong sebagai penyeimbang tombol X
+                        width: 24), // Ruang kosong sebagai penyeimbang tombol X
                     Expanded(
                       child: Center(
                         child: Text(
-                          'CLOCK Out ABSENSI',
+                          'CLOCK OUT ABSENSI',
                           style: GoogleFonts.roboto(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -189,11 +307,14 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                         ),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    SizedBox(
+                      width: 24,
+                      child: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
                     ),
                   ],
                 ),
@@ -265,127 +386,6 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                       ),
                     ),
                   ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // Method untuk menampilkan pop up QR Code - Clock In
-  void _showQrCodeScannerDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            width: double.infinity,
-            height: 500,
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // QR Scanner frame
-                Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[800],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Top left corner
-                      Positioned(
-                        top: 16,
-                        left: 16,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(color: Colors.white, width: 2),
-                              left: BorderSide(color: Colors.white, width: 2),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Top right corner
-                      Positioned(
-                        top: 16,
-                        right: 16,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(color: Colors.white, width: 2),
-                              right: BorderSide(color: Colors.white, width: 2),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Bottom left corner
-                      Positioned(
-                        bottom: 16,
-                        left: 16,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(color: Colors.white, width: 2),
-                              left: BorderSide(color: Colors.white, width: 2),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Bottom right corner
-                      Positioned(
-                        bottom: 16,
-                        right: 16,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(color: Colors.white, width: 2),
-                              right: BorderSide(color: Colors.white, width: 2),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // QR code boxes in the center
-                      Center(
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          child: GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 8,
-                            crossAxisSpacing: 8,
-                            children: List.generate(4, (index) {
-                              return Container(
-                                decoration: BoxDecoration(
-                                  border:
-                                      Border.all(color: Colors.white, width: 1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -585,9 +585,7 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                                       child: Material(
                                         color: Colors.grey[400],
                                         child: InkWell(
-                                          onTap: () {
-                                            
-                                          },
+                                          onTap: () {},
                                           child: Container(
                                             width: 90,
                                             height: 90,
