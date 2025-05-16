@@ -6,14 +6,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fortis_apps/core/appbar/app_bar_custom.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-class HomeClockOutScreen extends StatefulWidget {
-  const HomeClockOutScreen({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  _HomeClockOutScreenState createState() => _HomeClockOutScreenState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
+class _HomePageState extends State<HomePage> {
   // Sample user data
   final String userName = "Ivana Gunawan";
   final String userID = "123456";
