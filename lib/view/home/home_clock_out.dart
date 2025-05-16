@@ -20,9 +20,10 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
   final String userEmail = "ivana.gunawan@salvus.co.id";
 
   bool isClockedIn = false;
+  bool isClockedOut = true;
 
   // Method untuk menampilkan pop up Clock In
-  void _showClockOutAttendanceDialog() {
+  void _showClockDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -47,7 +48,9 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                     Expanded(
                       child: Center(
                         child: Text(
-                          'CLOCK OUT ATTENDANCE',
+                          !isClockedIn
+                              ? 'CLOCK IN ABSENSI'
+                              : 'CLOCK OUT ABSENSI',
                           style: GoogleFonts.roboto(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
@@ -191,9 +194,15 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                                       cameraController.dispose();
                                       Navigator.pop(context);
                                       setState(() {
-                                        isClockedIn = true;
+                                        if (!isClockedIn) {
+                                          isClockedIn = true;
+                                          isClockedOut = false;
+                                        } else {
+                                          isClockedIn = true;
+                                          isClockedOut = true;
+                                        }
                                       });
-                                      _showClockOutAttendanceDialog();
+                                      return;
                                     }
                                   }
                                 },
@@ -298,7 +307,9 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                     Expanded(
                       child: Center(
                         child: Text(
-                          'CLOCK OUT ABSENSI',
+                          !isClockedIn
+                              ? 'CLOCK IN ABSENSI'
+                              : 'CLOCK OUT ABSENSI',
                           style: GoogleFonts.roboto(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -325,7 +336,9 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                   height: 100,
                   child: Center(
                     child: Image.asset(
-                      'assets/icon/timer-pause-big-icon.png',
+                      !isClockedIn
+                          ? 'assets/icon/timer-start-big-icon.png'
+                          : 'assets/icon/timer-pause-big-icon.png',
                       width: 100,
                       height: 100,
                       color: Colors.black,
@@ -334,7 +347,9 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Are Sure Clock Out this $formattedTime ?',
+                  !isClockedIn
+                      ? 'Are Sure Clock In this $formattedTime ?'
+                      : 'Are Sure Clock Out this $formattedTime ?',
                   style: GoogleFonts.roboto(
                     fontSize: 16,
                   ),
@@ -374,7 +389,13 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                       ),
                       onPressed: () {
                         setState(() {
-                          isClockedIn = true;
+                          if (!isClockedIn) {
+                            isClockedIn = true;
+                            isClockedOut = false;
+                          } else {
+                            isClockedIn = true;
+                            isClockedOut = true;
+                          }
                         });
                         Navigator.of(context).pop();
                       },
@@ -583,9 +604,15 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(15),
                                       child: Material(
-                                        color: Colors.grey[400],
+                                        color: isClockedIn
+                                            ? Colors.grey[400]
+                                            : greenMainColor,
                                         child: InkWell(
-                                          onTap: () {},
+                                          onTap: isClockedIn 
+                                          ? null 
+                                          : () {
+                                            _showClockDialog();
+                                          },
                                           child: Container(
                                             width: 90,
                                             height: 90,
@@ -644,13 +671,14 @@ class _HomeClockOutScreenState extends State<HomeClockOutScreen> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(15),
                                       child: Material(
-                                        color: isClockedIn
+                                        color: isClockedOut
                                             ? Colors.grey[400]
                                             : greenMainColor,
                                         child: InkWell(
-                                          onTap: () {
-                                            // Panggil Fungsi untuk menampilkan pop up Clock In
-                                            _showClockOutAttendanceDialog();
+                                          onTap: isClockedOut 
+                                          ? null 
+                                          : () {
+                                            _showClockDialog();
                                           },
                                           child: Container(
                                             width: 90,
