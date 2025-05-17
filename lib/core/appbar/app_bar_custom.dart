@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fortis_apps/view/profile/setting.dart';
 
 class AppBarCustom extends StatelessWidget {
   const AppBarCustom({super.key});
@@ -19,7 +20,14 @@ class AppBarCustom extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.menu),
             iconSize: 30,
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MenuSettingsPage(),
+                ),
+              );
+            },
           )
         ],
       ),

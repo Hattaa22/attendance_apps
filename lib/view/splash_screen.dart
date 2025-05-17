@@ -1,13 +1,6 @@
-import 'package:attendance_apps/view/login_screen.dart';
+import 'package:fortis_apps/view/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
-
-void main() {
-  runApp(MaterialApp(
-    home: SplashScreen(),
-    debugShowCheckedModeBanner: false,
-  ));
-}
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

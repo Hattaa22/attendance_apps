@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fortis_apps/view/home/home.dart';
 
 void main() => runApp(
   MaterialApp(
@@ -29,7 +30,14 @@ class _LoginScreenState extends State<LoginScreen> {
       print("Login");
       setState(() {
         _errorMessage = null;
+        
       });
+      Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const HomePage(),
+      ),
+    );
     } else {
       setState(() {
         _errorMessage = "Invalid username or password";

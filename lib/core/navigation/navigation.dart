@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
+import 'package:fortis_apps/view/menus_timesheet_page.dart';
 
 class Navigation extends StatelessWidget {
   // final int currentIndex;
@@ -29,7 +30,16 @@ class Navigation extends StatelessWidget {
       unselectedItemColor: Colors.white,
       type: BottomNavigationBarType.fixed,
       currentIndex: 0,
-      // onTap: onTap,
+      onTap: (index) {
+        if (index == 3) { // Index 3 adalah TIMESHEET
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MenusTimesheetPage(),
+            ),
+          );
+        }
+      },
     );
   }
 }
