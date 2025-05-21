@@ -46,7 +46,7 @@ class _NavigationState extends State<Navigation> {
         currentIndex: _selectedIndex,
         backgroundColor: Colors.white,
         selectedItemColor: blueMainColor,
-        unselectedItemColor: greyMainColor,
+        unselectedItemColor: greyNavColor,
         showSelectedLabels: true,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,

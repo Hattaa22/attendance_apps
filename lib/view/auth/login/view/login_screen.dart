@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fortis_apps/core/color/colors.dart';
 import 'package:fortis_apps/view/home/view/home.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -9,143 +10,249 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _obscureText = true;
+  bool _isFormFilled = false;
 
-  final String _dummyUsername = 'admin';
-  final String _dummyPassword = '1234';
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(_updateFormState);
+    _passwordController.addListener(_updateFormState);
+  }
 
-  String? _errorMessage;
+  void _updateFormState() {
+    setState(() {
+      _isFormFilled = _emailController.text.isNotEmpty && _passwordController.text.isNotEmpty;
+    });
+  }
 
-  void _handleLogin() {
-    if (_usernameController.text == _dummyUsername &&
-        _passwordController.text == _dummyPassword) {
-      print("Login");
-      setState(() {
-        _errorMessage = null;
-        
-      });
-      Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HomePage(),
-      ),
-    );
-    } else {
-      setState(() {
-        _errorMessage = "Invalid username or password";
-      });
-    }
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          SizedBox(height: screenHeight * 0.02),
-
-          // Logo
-          Image.network('https://mir-s3-cdn-cf.behance.net/projects/404/f790db206882689.Y3JvcCwxMzgwLDEwODAsMjcwLDA.png', height: 180), // Tambah asset logomu di sini
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline, size: 32, color: Colors.grey[700]),
-              SizedBox(width: 10),
-              Text(
-                "Sign In", 
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold, 
-                  color: Colors.black87
-                  )
-                ),
-            ],
-          ),
-
-          SizedBox(height: 20),
-
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.all(24),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Color(0xFF2E59A7),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
-                ),
-              ),
+          // White background section
+          Container(
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Username field
-                  TextField(
-                    controller: _usernameController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      labelText: 'User Name',
-                      hintText: 'Insert User Name',
-                      prefixIcon: Icon(Icons.person),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  const SizedBox(height: 50),
+                  // Checkmark icon
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Color.fromRGBO(225, 230, 236, 1)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 1,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Image(
+                      image: AssetImage('assets/images/logo-attendances-2.png'),
+                      width: 24,
+                      height: 24,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Welcome text
+                  const Text(
+                    'Welcome to Attendance!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Login container
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Color.fromRGBO(238, 238, 238, 1), width: 3),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
-
-                  SizedBox(height: 20),
-
-                  // Password field
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      labelText: 'Password',
-                      hintText: 'Insert Password',
-                      prefixIcon: Icon(Icons.key),
-                      suffixIcon: Icon(Icons.visibility_off),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-
-                  if (_errorMessage != null) ...[
-                    SizedBox(height: 10),
-                    Text(
-                      _errorMessage!,
-                      style: TextStyle(color: Colors.red[200], fontSize: 14),
-                    ),
-                  ],
-
-                  SizedBox(height: 56),
-
-                  // Login Button
-                  ElevatedButton(
-                    onPressed: _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
-                      minimumSize: Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      "LOGIN",
-                      style: TextStyle(color: Colors.white, fontSize: 16, letterSpacing: 1),
-                    ),
-                  )
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
-          )
+          ),
+          // Grey background section
+          Expanded(
+            child: Container(
+              color: greyMainColor,
+              width: double.infinity,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Email field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Email',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              hoverColor: Colors.white,
+                              focusColor: Colors.white,
+                              hintText: 'Enter your email',
+                              hintStyle: TextStyle(color: Color.fromRGBO(165, 165, 165, 1)),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(color: greyMainColor),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(color: greyMainColor),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      // Password field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Password',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _passwordController,
+                            obscureText: _obscureText,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              focusColor: Colors.white,
+                              hoverColor: Colors.white,
+                              hintText: 'Enter your password',
+                              hintStyle: TextStyle(color: Color.fromRGBO(165, 165, 165, 1)),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(color: greyMainColor),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(color: greyMainColor),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  size: 24,
+                                  _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureText = !_obscureText;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Forgot password
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {},
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(50, 30),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Forget password?',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Login button
+                      ElevatedButton(
+                        onPressed: _isFormFilled ? () {} : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isFormFilled ? blueMainColor : const Color.fromRGBO(223, 223, 223, 1),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Login',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
