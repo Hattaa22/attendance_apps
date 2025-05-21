@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:fortis_apps/view/auth/login/view/login_screen.dart';
 import 'package:fortis_apps/view/splash_screen/splash_screen.dart';
 import 'package:go_router/go_router.dart';
