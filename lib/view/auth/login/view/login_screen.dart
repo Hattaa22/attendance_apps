@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fortis_apps/view/home/home.dart';
+import 'package:fortis_apps/view/home/view/home.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

@@ -4,7 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 // import 'package:lucide_icons_flutter/test_icons.dart';
 import 'package:fortis_apps/view/attendance/view/attendance.dart';
 import 'package:fortis_apps/view/calendar/view/calendar.dart';
-import 'package:fortis_apps/view/home/home.dart';
+import 'package:fortis_apps/view/home/view/home.dart';
 import 'package:fortis_apps/view/leave/view/leave.dart';
 import 'package:fortis_apps/view/profile/view/profile.dart';
 
