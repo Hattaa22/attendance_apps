@@ -144,6 +144,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  go_router:
+    dependency: "direct main"
+    description:
+      name: go_router
+      sha256: "0b1e06223bee260dee31a171fb1153e306907563a0b0225e8c1733211911429a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "15.1.2"
   google_fonts:
     dependency: "direct main"
     description:
@@ -280,6 +288,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.0"
+  logging:
+    dependency: transitive
+    description:
+      name: logging
+      sha256: c8245ada5f1717ed44271ed1c26b8ce85ca3228fd2ffdb75468ab01979309d61
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.0"
+  lucide_icons_flutter:
+    dependency: "direct main"
+    description:
+      name: lucide_icons_flutter
+      sha256: "98b5935ab5caeeadfc6efc6649c776b8bb9ffeb4879a1e24d0b78e4b104f40a1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.3"
   matcher:
     dependency: transitive
     description:

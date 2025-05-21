@@ -3,7 +3,6 @@ import 'package:fortis_apps/core/navigation/navigation.dart';
 import 'package:intl/intl.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:fortis_apps/core/appbar/app_bar_custom.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class HomePage extends StatefulWidget {
@@ -424,10 +423,6 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: whiteMainColor,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: AppBarCustom(),
-      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -784,12 +779,12 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            Center(
-              child: Image.asset(
-                'assets/logo/salvus-logo.png',
-                height: 37,
-              ),
-            ),
+            // Center(
+            //   child: Image.asset(
+            //     'assets/logo/salvus-logo.png',
+            //     height: 37,
+            //   ),
+            // ),
           ],
         ),
       ),

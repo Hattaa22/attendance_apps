@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/view/home/home.dart';
 
-void main() => runApp(
-  MaterialApp(
-    home: LoginScreen(), 
-    debugShowCheckedModeBanner: false
-    ),
-  );
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 

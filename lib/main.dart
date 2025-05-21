@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fortis_apps/view/splash_screen.dart';
+import 'package:fortis_apps/view/splash_screen/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
