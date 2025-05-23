@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:fortis_apps/view/auth/reset_password/view/reset_password.dart';
-// import 'package:fortis_apps/view/home/view/home.dart';
+import 'package:fortis_apps/view/home/view/home.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -227,7 +227,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(builder: (_) => ResetPasswordPage()),
+                              MaterialPageRoute(
+                                  builder: (_) => ResetPasswordPage()),
                             );
                           },
                           style: TextButton.styleFrom(
@@ -247,7 +248,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 24),
                       // Login button
                       ElevatedButton(
-                        onPressed: _isFormFilled ? () {} : null,
+                        onPressed: _isFormFilled
+                            ? () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const Home()),
+                                );
+                              }
+                            : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _isFormFilled
                               ? blueMainColor

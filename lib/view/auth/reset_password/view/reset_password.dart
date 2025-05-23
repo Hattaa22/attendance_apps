@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:fortis_apps/widget_global/show_dialog_success/dialog_success.dart';
+import '../../login/view/login_screen.dart';
 // import 'package:fortis_apps/view/home/view/home.dart';
 
 class ResetPasswordPage extends StatefulWidget {
@@ -33,15 +34,15 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   }
 
   void _sendToEmail(BuildContext context, String email) {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => CustomSuccessDialog(
-      title: 'Email terkirim!',
-      message: 'Kami telah mengirim link reset password\nke email $email',
-    ),
-  );
-}
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => CustomSuccessDialog(
+        title: 'Email terkirim!',
+        message: 'Kami telah mengirim link reset password\nke email $email',
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +52,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => LoginScreen()),
+            );
           },
         ),
       ),
@@ -98,7 +102,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               width: double.infinity,
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -123,7 +128,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               hoverColor: Colors.white,
                               focusColor: Colors.white,
                               hintText: 'Enter your email',
-                              hintStyle: TextStyle(color: Color.fromRGBO(165, 165, 165, 1)),
+                              hintStyle: TextStyle(
+                                  color: Color.fromRGBO(165, 165, 165, 1)),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide(color: greyMainColor),
@@ -134,9 +140,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                                borderSide:
+                                    const BorderSide(color: Color(0xFFE0E0E0)),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 14),
                             ),
                           ),
                         ],
@@ -144,11 +152,15 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       const SizedBox(height: 24),
                       // Send button
                       ElevatedButton(
-                        onPressed: _isFormFilled ? () {
-                          _sendToEmail(context, _emailController.text);
-                        } : null,
+                        onPressed: _isFormFilled
+                            ? () {
+                                _sendToEmail(context, _emailController.text);
+                              }
+                            : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _isFormFilled ? blueMainColor : const Color.fromRGBO(223, 223, 223, 1),
+                          backgroundColor: _isFormFilled
+                              ? blueMainColor
+                              : const Color.fromRGBO(223, 223, 223, 1),
                           foregroundColor: Colors.white,
                           minimumSize: const Size(double.infinity, 50),
                           shape: RoundedRectangleBorder(
