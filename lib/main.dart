@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fortis_apps/view/splash_screen/splash_screen.dart';
+import 'package:fortis_apps/view/profile/profile.dart'; // pastikan path ini benar
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const SplashScreen(),
+      home: const ProfilePage(),
     );
   }
 }
