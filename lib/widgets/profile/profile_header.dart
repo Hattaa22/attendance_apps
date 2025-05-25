@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/profile/change_photo_profile.dart';
 
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({super.key});
@@ -43,25 +44,41 @@ class ProfileHeader extends StatelessWidget {
             Positioned(
               bottom: 0,
               right: 0,
-              child: Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                ),
-                child: Image.asset(
-                  'icon/edit.png',
+              child: GestureDetector(
+                onTap: () {
+                  // Show change photo modal
+                  ChangePhotoProfile.show(
+                    context,
+                    onTakePhoto: () {
+                      // Handle take photo action
+                      _handleTakePhoto();
+                    },
+                    onChoosePhoto: () {
+                      // Handle choose photo action
+                      _handleChoosePhoto();
+                    },
+                  );
+                },
+                child: Container(
                   width: 30,
                   height: 30,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.edit,
-                      size: 18,
-                      color: Colors.grey[700],
-                    );
-                  },
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                  child: Image.asset(
+                    'icon/edit.png',
+                    width: 30,
+                    height: 30,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.edit,
+                        size: 18,
+                        color: Colors.grey[700],
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -118,5 +135,16 @@ class ProfileHeader extends StatelessWidget {
         shape: BoxShape.circle,
       ),
     );
+  }
+
+  void _handleTakePhoto() {
+    // TODO: Implementasi untuk mengambil foto dari kamera
+    print('Take photo selected');
+  }
+
+  // Method untuk handle choose photo
+  void _handleChoosePhoto() {
+    // TODO: Implementasi untuk memilih foto dari galeri
+    print('Choose photo from gallery selected');
   }
 }
