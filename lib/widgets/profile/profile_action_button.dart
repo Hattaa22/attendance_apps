@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/profile/log_out.dart';
 
 class ProfileActionButton extends StatelessWidget {
   final String label;
@@ -17,7 +18,13 @@ class ProfileActionButton extends StatelessWidget {
     return Container(
       decoration: _boxDecoration(),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          if (label == 'Logout') {
+            LogOutPopup.show(context);
+          } else {
+            onTap();
+          }
+        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -48,11 +55,6 @@ class ProfileActionButton extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey[400],
-              ),
             ],
           ),
         ),
