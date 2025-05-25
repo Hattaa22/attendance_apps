@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fortis_apps/view/profile/profile.dart'; // pastikan path ini benar
+import 'package:fortis_apps/view/profile/profile.dart';
 
 void main() {
   runApp(const MyApp());
