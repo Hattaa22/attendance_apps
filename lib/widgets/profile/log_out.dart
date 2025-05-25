@@ -47,7 +47,6 @@ class LogOutPopup extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
@@ -77,19 +76,19 @@ class LogOutPopup extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-
                       SizedBox(
                         width: 110,
                         child: OutlinedButton(
                           onPressed:
                               onCancel ?? () => Navigator.of(context).pop(),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.black),
+                            side: const BorderSide(
+                              color: Colors.black,
+                              width: 0.5,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -109,12 +108,10 @@ class LogOutPopup extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 20),
-
                       SizedBox(
                         width: 110,
                         child: ElevatedButton(
-                          onPressed:
-                              onLogout ?? () {},
+                          onPressed: onLogout ?? () {},
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                             shape: RoundedRectangleBorder(
@@ -126,7 +123,7 @@ class LogOutPopup extends StatelessWidget {
                             'Log out',
                             style: TextStyle(
                               fontFamily: 'Inter',
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                               fontSize: 14,
                               height: 1.2,
                               letterSpacing: 0.2,
@@ -139,7 +136,6 @@ class LogOutPopup extends StatelessWidget {
                   ),
                 ],
               ),
-
               Positioned(
                 top: 0,
                 right: 0,
