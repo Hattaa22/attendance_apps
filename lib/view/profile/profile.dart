@@ -23,11 +23,11 @@ class ProfilePage extends StatelessWidget {
               const SizedBox(height: 32),
               const ProfileDetailCard(),
               const SizedBox(height: 16),
-              // ProfileActionButton(
-              //   label: 'Settings',
-              //   iconPath: 'icon/Setting_fill.png',
-              //   onTap: () {},
-              // ),
+              ProfileActionButton(
+                label: 'Change password',
+                iconPath: 'icon/Password.png',
+                onTap: () {},
+              ),
               const SizedBox(height: 16),
               ProfileActionButton(
                 label: 'Logout',
