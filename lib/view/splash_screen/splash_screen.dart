@@ -1,8 +1,7 @@
-import 'package:fortis_apps/view/auth/login/view/login_screen.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
-// import 'package:fortis_apps/core/router/router.dart';
+import 'package:go_router/go_router.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,10 +17,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Delay
     Timer(Duration(seconds: 2), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => LoginScreen()),
-      );
+      if (mounted) {
+        context.go('/login');
+  }
     });
   }
 

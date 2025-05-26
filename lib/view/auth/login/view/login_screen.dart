@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
-import 'package:fortis_apps/view/auth/reset_password/view/reset_password.dart';
-import 'package:fortis_apps/view/home/view/home.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +14,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _obscureText = true;
   bool _isFormFilled = false;
+  String? _emailError;
+  final RegExp _emailRegex = RegExp(r'^[a-zA-Z0-9.@]+$');
 
   @override
   void initState() {
@@ -28,6 +29,19 @@ class _LoginScreenState extends State<LoginScreen> {
       _isFormFilled = _emailController.text.isNotEmpty &&
           _passwordController.text.isNotEmpty;
     });
+  }
+
+  bool _isValidEmail(String email) {
+    if (!_emailRegex.hasMatch(email) || !email.contains("@")){
+      setState(() {
+        _emailError = 'Email tidak valid';
+      });
+      return false;
+    }
+    setState(() {
+      _emailError = null;
+    });
+    return true;
   }
 
   @override
@@ -143,6 +157,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               hintText: 'Enter your email',
                               hintStyle: TextStyle(
                                   color: Color.fromRGBO(165, 165, 165, 1)),
+                              errorText: _emailError,
+                              errorStyle: TextStyle(color: Colors.red),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide(color: greyMainColor),
@@ -225,11 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => ResetPasswordPage()),
-                            );
+                            context.go('/resetPassword');
                           },
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
@@ -250,11 +262,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ElevatedButton(
                         onPressed: _isFormFilled
                             ? () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const Home()),
-                                );
+                                if (_isValidEmail(_emailController.text)) {
+                                  context.go('/home');
+                                }
                               }
                             : null,
                         style: ElevatedButton.styleFrom(

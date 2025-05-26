@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:fortis_apps/widget_global/show_dialog_success/dialog_success.dart';
-import '../../login/view/login_screen.dart';
-// import 'package:fortis_apps/view/home/view/home.dart';
+import 'package:go_router/go_router.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key});
@@ -14,6 +13,8 @@ class ResetPasswordPage extends StatefulWidget {
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final TextEditingController _emailController = TextEditingController();
   bool _isFormFilled = false;
+  String? _emailError;
+  final RegExp _emailRegex = RegExp(r'^[a-zA-Z0-9.@]+$');
 
   @override
   void initState() {
@@ -31,6 +32,19 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   void dispose() {
     _emailController.dispose();
     super.dispose();
+  }
+
+  bool _isValidEmail(String email) {
+    if (!_emailRegex.hasMatch(email) || !email.contains("@")){
+      setState(() {
+        _emailError = 'Email tidak valid';
+      });
+      return false;
+    }
+    setState(() {
+      _emailError = null;
+    });
+    return true;
   }
 
   void _sendToEmail(BuildContext context, String email) {
@@ -52,10 +66,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => LoginScreen()),
-            );
+            context.go('/login');
           },
         ),
       ),
@@ -130,6 +141,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               hintText: 'Enter your email',
                               hintStyle: TextStyle(
                                   color: Color.fromRGBO(165, 165, 165, 1)),
+                                                            errorText: _emailError,
+                              errorStyle: TextStyle(color: Colors.red),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide(color: greyMainColor),
@@ -154,7 +167,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       ElevatedButton(
                         onPressed: _isFormFilled
                             ? () {
-                                _sendToEmail(context, _emailController.text);
+                                if(_isValidEmail(_emailController.text)) {
+                                  _sendToEmail(context, _emailController.text);
+                                }
                               }
                             : null,
                         style: ElevatedButton.styleFrom(
