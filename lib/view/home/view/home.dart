@@ -3,7 +3,7 @@ import 'package:fortis_apps/core/navigation/navigation.dart';
 import '../../attendance/view/attendance.dart';
 import '../../calendar/view/calendar.dart';
 import '../../leave/view/leave.dart';
-import '../../profile/profile.dart';
+import '../../profile/view/profile.dart';
 import 'home_body.dart';
 
 class Home extends StatefulWidget {
