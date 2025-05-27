@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../widgets/profile/log_out.dart';
+import '../../profile/widgets/log_out.dart';
 
 class ProfileActionButton extends StatelessWidget {
   final String label;

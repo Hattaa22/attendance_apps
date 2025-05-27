@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../widgets/profile/profile_title.dart';
-import '../../widgets/profile/profile_header.dart';
-import '../../widgets/profile/profile_detail_card.dart';
-import '../../widgets/profile/profile_action_button.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fortis_apps/widgets/change_password/change_password_alert.dart';
+
+import '../../profile/widgets/profile_title.dart';
+import '../../profile/widgets/profile_header.dart';
+import '../../profile/widgets/profile_detail_card.dart';
+import '../../profile/widgets/profile_action_button.dart';
+import '../../profile/widgets/change_password_alert.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
