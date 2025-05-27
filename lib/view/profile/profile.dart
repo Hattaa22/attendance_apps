@@ -3,6 +3,8 @@ import '../../widgets/profile/profile_title.dart';
 import '../../widgets/profile/profile_header.dart';
 import '../../widgets/profile/profile_detail_card.dart';
 import '../../widgets/profile/profile_action_button.dart';
+import 'package:go_router/go_router.dart';
+import 'package:fortis_apps/widgets/change_password/change_password_alert.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -26,7 +28,22 @@ class ProfilePage extends StatelessWidget {
               ProfileActionButton(
                 label: 'Change password',
                 iconPath: 'icon/Password.png',
-                onTap: () {},
+                onTap: () async {
+                  // Gunakan push dan tunggu hasil
+                  final result = await context.push('/changePassword');
+
+                  // Jika berhasil ganti password, tampilkan alert di profile
+                  // Cek apakah context masih valid sebelum menampilkan dialog
+                  if (result == true && context.mounted) {
+                    ChangePasswordAlert.show(
+                      context,
+                      onOkayPressed: () {
+                        Navigator.of(context).pop(); // Tutup dialog
+                        // Tetap di profile page
+                      },
+                    );
+                  }
+                },
               ),
               const SizedBox(height: 16),
               ProfileActionButton(
