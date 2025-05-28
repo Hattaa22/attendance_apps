@@ -6,31 +6,47 @@ class Navigation extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
 
-  const Navigation({super.key, required this.currentIndex, required this.onTap});
+  const Navigation(
+      {super.key, required this.currentIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       items: const [
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.house),
+          icon: ImageIcon(
+            AssetImage('assets/icon/Home.png'),
+            size: 30,
+          ),
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.clipboardList),
-          label: 'Attendance',
+          icon: ImageIcon(
+            AssetImage('assets/icon/Desk_alt.png'),
+            size: 30,
+          ),
+          label: 'Attedance',
         ),
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.calendarDays),
+          icon: ImageIcon(
+            AssetImage('assets/icon/Date_range.png'),
+            size: 30,
+          ),
           label: 'Calendar',
         ),
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.logOut),
+          icon: ImageIcon(
+            AssetImage('assets/icon/Sign_out_squre.png'),
+            size: 30,
+          ),
           label: 'Leave',
         ),
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.circleUserRound),
-          label: 'Profile',
+          icon: ImageIcon(
+            AssetImage('assets/icon/User_cicrle_light.png'),
+            size: 30,
+          ),
+          label: 'Leave',
         ),
       ],
       backgroundColor: Colors.white,
