@@ -39,6 +39,7 @@ dependencies:
   image_picker: ^1.0.4
   lucide_icons_flutter: ^3.0.3
   go_router: 
+  table_calendar:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
