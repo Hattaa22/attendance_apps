@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fortis_apps/view/splash_screen.dart';
+import 'package:fortis_apps/view/splash_screen/splash_screen.dart';
+
+import 'core/router/router.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,14 +12,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Attendance Apps',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const SplashScreen(),
+      routerConfig: router,
     );
   }
 }

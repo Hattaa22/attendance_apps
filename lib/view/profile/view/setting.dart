@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fortis_apps/view/profile/edit_profile_photo.dart';
+import 'package:fortis_apps/view/profile/view/edit_profile_photo.dart';
 import 'package:inner_shadow_widget/inner_shadow_widget.dart';
 
 class MenuSettingsPage extends StatefulWidget {
