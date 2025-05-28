@@ -1,5 +1,7 @@
 import 'package:fortis_apps/view/auth/login/view/login_screen.dart';
 import 'package:fortis_apps/view/auth/reset_password/view/reset_password.dart';
+import 'package:fortis_apps/view/calendar/view/add_meeting.dart';
+import 'package:fortis_apps/view/calendar/view/calendar.dart';
 import 'package:fortis_apps/view/home/view/home.dart';
 import 'package:fortis_apps/view/splash_screen/splash_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -26,6 +28,16 @@ final GoRouter router = GoRouter(
       name: '/home',
       path: '/home',
       builder: (context, state) => const Home(),
+    ),
+    GoRoute(
+      name: '/calendar',
+      path: '/calendar',
+      builder: (context, state) => const CalendarPage(),
+    ),
+    GoRoute(
+      name: '/addMeeting',
+      path: '/addMeeting',
+      builder: (context, state) => const AddMeetingPage(),
     ),
   ]
 );

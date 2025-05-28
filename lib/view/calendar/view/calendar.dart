@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../core/color/colors.dart';
@@ -35,15 +36,15 @@ class _CalendarPageState extends State<CalendarPage> {
   Color _getEventColor(String type) {
     switch (type.toLowerCase()) {
       case 'meeting':
-        return Colors.yellow;
+        return yellowMainColor;
       case 'request':
-        return Colors.green;
+        return greenSecondColor;
       case 'conference':
-        return Colors.purple;
+        return purpleMainColor;
       case 'training':
-        return Colors.lightBlue;
+        return lightBlueColor;
       default:
-        return Colors.grey;
+        return greyNavColor;
     }
   }
 
@@ -244,7 +245,9 @@ class _CalendarPageState extends State<CalendarPage> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          context.go('/addMeeting');
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: blueMainColor,
                           padding: const EdgeInsets.symmetric(
@@ -254,7 +257,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         ),
                         child: const Text("Add Meeting",
                             style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white)),
                       ),
@@ -318,7 +321,7 @@ class _CalendarPageState extends State<CalendarPage> {
                             ...entry.value.map((event) => Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const SizedBox(height: 13),
+                                    const SizedBox(height: 10),
                                     const Divider(
                                       height: 1,
                                       thickness: 1,
@@ -332,15 +335,15 @@ class _CalendarPageState extends State<CalendarPage> {
                                           DateFormat('dd/MM/yyyy')
                                               .format(_selectedDay),
                                           style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[600],
+                                            fontSize: 12,
+                                            color: greyNavColor,
                                           ),
                                         ),
                                         Text(
                                           ' | ${event.time}',
                                           style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey[600],
+                                            fontSize: 12,
+                                            color: greyNavColor,
                                           ),
                                         ),
                                       ],
@@ -350,8 +353,8 @@ class _CalendarPageState extends State<CalendarPage> {
                                     Text(
                                       event.mode,
                                       style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
                                         color: blueMainColor,
                                       ),
                                     ),
@@ -360,7 +363,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                     Text(
                                       event.title,
                                       style: const TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.black,
                                       ),
@@ -370,8 +373,9 @@ class _CalendarPageState extends State<CalendarPage> {
                                     Text(
                                       event.department,
                                       style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                        color: greyNavColor,
+                                        fontWeight: FontWeight.w400,
                                       ),
                                     ),
                                   ],
