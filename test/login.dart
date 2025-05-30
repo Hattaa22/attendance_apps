@@ -97,7 +97,7 @@ class MyApp extends StatelessWidget {
     print(
         '   Result: ${user != null ? "✅ User data exists" : "❌ No user data"}');
     if (user != null) {
-      print('   User ID: ${user['id'] ?? "N/A"}');
+      print('   nip: ${user['nip'] ?? "N/A"}');
       print('   User Name: ${user['name'] ?? "N/A"}');
     }
     await _delay();
