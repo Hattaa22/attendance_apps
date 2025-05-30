@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'token_storage.dart';
+import 'auth_service.dart'; // buat refresh token
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
-  
   factory ApiService() => _instance;
 
   late Dio dio;
@@ -23,15 +24,27 @@ class ApiService {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // inject auth token here if needed (ambil dari storage, misalnya)
-          // final token = await AuthStorage.getToken();
-          // if (token != null) {
-          //   options.headers['Authorization'] = 'Bearer $token';
-          // }
+          final token = await TokenStorage.getToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
           return handler.next(options);
         },
-        onError: (DioException e, handler) {
-          print('Dio error: ${e.message}');
+        onError: (DioException e, handler) async {
+          if (e.response?.statusCode == 401) {
+            bool refreshed = await AuthService().refreshToken();
+            if (refreshed) {
+              final newToken = await TokenStorage.getToken();
+              e.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+
+              final retryResponse = await dio.fetch(e.requestOptions);
+              return handler.resolve(retryResponse);
+            } 
+            else {
+              await AuthService().logout();
+            }
+          }
+
           return handler.next(e);
         },
       ),

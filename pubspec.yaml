@@ -40,7 +40,7 @@ dependencies:
   lucide_icons_flutter: ^3.0.3
   go_router: 
   dio: ^5.4.0           # HTTP client
-  provider: ^6.1.1      # Sate management
+  provider: ^6.1.1      # State management
   flutter_secure_storage: ^5.0.2
   flutter_dotenv: ^5.0.2
 
