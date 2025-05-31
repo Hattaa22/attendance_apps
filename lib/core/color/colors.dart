@@ -6,3 +6,6 @@ const Color greenMainColor = Color.fromRGBO(67, 147, 108, 1);
 const Color deepNavyMainColor = Color.fromRGBO(23, 15, 79, 1);
 const Color greyNavColor = Color.fromRGBO(139, 139, 139, 1);
 const Color greyMainColor = Color.fromRGBO(244, 244, 244, 1);
+const Color whiteWithOpacity = Color.fromRGBO(255, 255, 255, 0.15);
+const Color pureBlack = Color.fromRGBO(0, 0, 0, 1);
+const Color greyText = Color.fromRGBO(139, 139, 139, 1);
