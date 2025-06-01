@@ -14,7 +14,7 @@ class HomeBody extends StatefulWidget {
 
 class _HomeBodyState extends State<HomeBody> {
   // Sample user data
-  final String userName = "Sawadikap";
+  final String userName = "sawaw";
   final String location = "Malang, East Java";
 
   bool isClockedIn = false;
@@ -106,10 +106,11 @@ class _HomeBodyState extends State<HomeBody> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        color: greenMainColor,
+                        color: blueMainColor,
                         child: Container(
-                          width: 100,
-                          padding: const EdgeInsets.all(12),
+                          width: 110,
+                          height: 110,
+                          padding: const EdgeInsets.all(5),
                           child: Column(
                             children: [
                               Image.asset(
@@ -144,8 +145,9 @@ class _HomeBodyState extends State<HomeBody> {
                         ),
                         color: blueMainColor,
                         child: Container(
-                          width: 100,
-                          padding: const EdgeInsets.all(12),
+                          width: 110,
+                          height: 110,
+                          padding: const EdgeInsets.all(5),
                           child: Column(
                             children: [
                               Image.asset(
@@ -154,7 +156,7 @@ class _HomeBodyState extends State<HomeBody> {
                                 height: 66,
                                 color: whiteMainColor,
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 5),
                               Text(
                                 'QR Code',
                                 style: GoogleFonts.roboto(
@@ -168,6 +170,86 @@ class _HomeBodyState extends State<HomeBody> {
                       ),
                     ),
                   ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Tambahkan method ini setelah method _showOneClickConfirmationDialog()
+  void _showSuccessClockInDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Tidak bisa ditutup dengan tap di luar
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Clock In Confirmed!',
+                  style: GoogleFonts.roboto(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: pureBlack,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'You have successfully clocked in at\n08:00 AM on Monday 16 June 2025.\nHave a good day and have a productive\nday!',
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: blueMainColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'Okay!',
+                      style: GoogleFonts.roboto(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -208,13 +290,15 @@ class _HomeBodyState extends State<HomeBody> {
                               borderRadius: BorderRadius.circular(16),
                               child: MobileScanner(
                                 controller: cameraController,
+                                // Di dalam onDetect callback MobileScanner, ganti bagian ini:
                                 onDetect: (capture) {
                                   final List<Barcode> barcodes =
                                       capture.barcodes;
                                   for (final barcode in barcodes) {
                                     if (barcode.rawValue != null) {
                                       cameraController.dispose();
-                                      Navigator.pop(context);
+                                      Navigator.pop(
+                                          context); // Tutup scanner dialog
                                       setState(() {
                                         if (!isClockedIn) {
                                           isClockedIn = true;
@@ -223,6 +307,11 @@ class _HomeBodyState extends State<HomeBody> {
                                           isClockedIn = true;
                                           isClockedOut = true;
                                         }
+                                      });
+                                      // Tampilkan success dialog setelah state berubah
+                                      Future.delayed(
+                                          Duration(milliseconds: 100), () {
+                                        _showSuccessClockInDialog();
                                       });
                                       return;
                                     }
@@ -306,7 +395,6 @@ class _HomeBodyState extends State<HomeBody> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.black, width: 5),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -321,11 +409,11 @@ class _HomeBodyState extends State<HomeBody> {
                       child: Center(
                         child: Text(
                           !isClockedIn
-                              ? 'CLOCK IN ABSENSI'
-                              : 'CLOCK OUT ABSENSI',
+                              ? 'Clock In Present'
+                              : 'Clock Out Present',
                           style: GoogleFonts.roboto(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 22,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -342,19 +430,26 @@ class _HomeBodyState extends State<HomeBody> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
                 SizedBox(
                   width: 100,
                   height: 100,
                   child: Center(
                     child: Image.asset(
                       !isClockedIn
-                          ? 'assets/icon/timer-start-big-icon.png'
+                          ? 'assets/icon/clock-in-present.png'
                           : 'assets/icon/timer-pause-big-icon.png',
                       width: 100,
                       height: 100,
-                      color: Colors.black,
+                      color: blueMainColor,
                     ),
+                  ),
+                ),
+                Text(
+                  'One Click',
+                  style: GoogleFonts.roboto(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w500,
+                    color: blueMainColor,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -374,10 +469,10 @@ class _HomeBodyState extends State<HomeBody> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        side: BorderSide(color: greenMainColor),
-                        minimumSize: Size(100, 40),
+                        side: BorderSide(color: whiteMainColor),
+                        minimumSize: Size(140, 40),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
@@ -388,15 +483,18 @@ class _HomeBodyState extends State<HomeBody> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 10),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: greenMainColor,
-                        minimumSize: Size(100, 40),
+                        backgroundColor: blueMainColor,
+                        minimumSize: Size(140, 40),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       onPressed: () {
+                        Navigator.of(context)
+                            .pop(); // Tutup dialog konfirmasi dulu
                         setState(() {
                           if (!isClockedIn) {
                             isClockedIn = true;
@@ -406,7 +504,10 @@ class _HomeBodyState extends State<HomeBody> {
                             isClockedOut = true;
                           }
                         });
-                        Navigator.of(context).pop();
+                        // Tampilkan success dialog setelah state berubah
+                        Future.delayed(Duration(milliseconds: 100), () {
+                          _showSuccessClockInDialog();
+                        });
                       },
                       child: Text(
                         'Yes!',
@@ -584,29 +685,17 @@ class _HomeBodyState extends State<HomeBody> {
                       width: double.infinity,
                       margin: const EdgeInsets.only(top: 120),
                       decoration: const BoxDecoration(
-                        color: Colors.white,
+                        color: whiteHome,
                       ),
                       child: Padding(
                         padding: EdgeInsets.fromLTRB(
-                            screenWidth * 0.05, 120, screenWidth * 0.05, 20),
+                            screenWidth * 0.02, 120, screenWidth * 0.02, 20),
                         child: Column(
                           children: [
                             // Attendance for this month with updated design
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.1),
-                                    spreadRadius: 1,
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -621,7 +710,7 @@ class _HomeBodyState extends State<HomeBody> {
                                             fontSize:
                                                 screenWidth < 360 ? 14 : 16,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.black,
+                                            color: pureBlack,
                                           ),
                                         ),
                                       ),
@@ -734,33 +823,35 @@ class _HomeBodyState extends State<HomeBody> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Flexible(
-                                  flex: 2,
-                                  child: Text(
-                                    '$formattedTime AM',
-                                    style: GoogleFonts.roboto(
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.bold,
-                                      color: pureBlack,
+                                // Tampilkan waktu hanya jika belum clock in
+                                if (!isClockedIn) ...[
+                                  Flexible(
+                                    flex: 2,
+                                    child: Text(
+                                      '$formattedTime AM',
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 25,
+                                        fontWeight: FontWeight.bold,
+                                        color: pureBlack,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 5),
+                                  const SizedBox(width: 5),
+                                ],
+                                // Tombol Clock In/Out
                                 Flexible(
-                                  flex: 2,
+                                  flex: isClockedIn ? 1 : 2,
                                   child: SizedBox(
-                                    width: screenWidth * 0.3,
+                                    width: isClockedIn
+                                        ? double.infinity
+                                        : screenWidth * 0.3,
                                     child: ElevatedButton(
-                                      onPressed: isClockedIn
-                                          ? null
-                                          : () => _showClockDialog(),
+                                      onPressed: () => _showClockDialog(),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: blueMainColor,
+                                        backgroundColor: isClockedIn
+                                            ? Colors.red
+                                            : blueMainColor,
                                         foregroundColor: whiteMainColor,
-                                        disabledBackgroundColor:
-                                            Colors.grey[300],
-                                        disabledForegroundColor:
-                                            Colors.grey[600],
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(10),
@@ -768,15 +859,13 @@ class _HomeBodyState extends State<HomeBody> {
                                         padding: EdgeInsets.symmetric(
                                           horizontal:
                                               screenWidth < 360 ? 16 : 24,
-                                          vertical:
-                                              8, // vertical padding dikurangi agar pas tinggi tombol
+                                          vertical: 8,
                                         ),
-                                        minimumSize: const Size.fromHeight(
-                                            40), // tinggi tombol supaya sejajar dengan teks
+                                        minimumSize: const Size.fromHeight(40),
                                         elevation: 0,
                                       ),
                                       child: Text(
-                                        isClockedIn ? 'Clocked In' : 'Clock In',
+                                        isClockedIn ? 'Clock Out' : 'Clock In',
                                         style: GoogleFonts.roboto(
                                           fontWeight: FontWeight.w600,
                                           fontSize: screenWidth < 360 ? 12 : 14,
@@ -889,9 +978,9 @@ class _HomeBodyState extends State<HomeBody> {
           Text(
             title,
             style: GoogleFonts.roboto(
-              fontSize: screenWidth < 360 ? 10 : 12,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              color: pureBlack,
+              fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
           ),
@@ -901,7 +990,7 @@ class _HomeBodyState extends State<HomeBody> {
             style: GoogleFonts.roboto(
               fontSize: screenWidth < 360 ? 16 : 20,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: pureBlack,
             ),
           ),
         ],
