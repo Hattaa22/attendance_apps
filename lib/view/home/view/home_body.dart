@@ -49,6 +49,7 @@ class _HomeBodyState extends State<HomeBody> {
   void _showClockDialog() {
     showDialog(
       context: context,
+      barrierColor: Colors.black.withOpacity(0.5), // Tambahkan gray opacity
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
@@ -72,7 +73,7 @@ class _HomeBodyState extends State<HomeBody> {
                         child: Text(
                           !isClockedIn
                               ? 'Clock In Present'
-                              : 'Clock On Present',
+                              : 'Clock Out Present', // Ubah text
                           style: GoogleFonts.roboto(
                             fontWeight: FontWeight.w500,
                             fontSize: 18,
@@ -96,7 +97,7 @@ class _HomeBodyState extends State<HomeBody> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // One Click Card
+                    // One Click Card - Ubah warna berdasarkan status
                     InkWell(
                       onTap: () {
                         Navigator.of(context).pop();
@@ -106,7 +107,9 @@ class _HomeBodyState extends State<HomeBody> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        color: blueMainColor,
+                        color: isClockedIn
+                            ? Colors.red
+                            : blueMainColor, // Ubah warna
                         child: Container(
                           width: 110,
                           height: 110,
@@ -133,7 +136,7 @@ class _HomeBodyState extends State<HomeBody> {
                       ),
                     ),
 
-                    // QR Code Card
+                    // QR Code Card - Ubah warna berdasarkan status
                     InkWell(
                       onTap: () {
                         Navigator.of(context).pop();
@@ -143,7 +146,9 @@ class _HomeBodyState extends State<HomeBody> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        color: blueMainColor,
+                        color: isClockedIn
+                            ? Colors.red
+                            : blueMainColor, // Ubah warna
                         child: Container(
                           width: 110,
                           height: 110,
@@ -259,10 +264,91 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
+  void _showSuccessClockOutDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.5), // Gray opacity
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Clock Out Confirmed!',
+                  style: GoogleFonts.roboto(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: pureBlack,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'You have successfully clocked out at\n04:00 PM on Monday 16 June 2025.\nThank you for your hard work today!',
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: blueMainColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'Okay!',
+                      style: GoogleFonts.roboto(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showQrCodeScannerDialog() {
     final MobileScannerController cameraController = MobileScannerController();
     showDialog(
       context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: Colors.transparent,
@@ -297,21 +383,25 @@ class _HomeBodyState extends State<HomeBody> {
                                   for (final barcode in barcodes) {
                                     if (barcode.rawValue != null) {
                                       cameraController.dispose();
-                                      Navigator.pop(
-                                          context); // Tutup scanner dialog
+                                      Navigator.pop(context);
                                       setState(() {
                                         if (!isClockedIn) {
                                           isClockedIn = true;
                                           isClockedOut = false;
                                         } else {
-                                          isClockedIn = true;
+                                          // Untuk Clock Out, kembali ke state awal
+                                          isClockedIn = false;
                                           isClockedOut = true;
                                         }
                                       });
-                                      // Tampilkan success dialog setelah state berubah
                                       Future.delayed(
                                           Duration(milliseconds: 100), () {
-                                        _showSuccessClockInDialog();
+                                        // Tampilkan dialog yang sesuai
+                                        if (isClockedIn) {
+                                          _showSuccessClockInDialog();
+                                        } else {
+                                          _showSuccessClockOutDialog();
+                                        }
                                       });
                                       return;
                                     }
@@ -387,6 +477,7 @@ class _HomeBodyState extends State<HomeBody> {
 
     showDialog(
       context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
@@ -410,7 +501,7 @@ class _HomeBodyState extends State<HomeBody> {
                         child: Text(
                           !isClockedIn
                               ? 'Clock In Present'
-                              : 'Clock Out Present',
+                              : 'Want to Clock Out ?',
                           style: GoogleFonts.roboto(
                             fontWeight: FontWeight.w500,
                             fontSize: 22,
@@ -493,18 +584,17 @@ class _HomeBodyState extends State<HomeBody> {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.of(context)
-                            .pop(); // Tutup dialog konfirmasi dulu
+                        Navigator.of(context).pop();
                         setState(() {
                           if (!isClockedIn) {
                             isClockedIn = true;
                             isClockedOut = false;
                           } else {
-                            isClockedIn = true;
+                            // Untuk Clock Out, kembali ke state awal
+                            isClockedIn = false;
                             isClockedOut = true;
                           }
                         });
-                        // Tampilkan success dialog setelah state berubah
                         Future.delayed(Duration(milliseconds: 100), () {
                           _showSuccessClockInDialog();
                         });
