@@ -1,105 +1,115 @@
-import 'package:dio/dio.dart';
-import 'package:fortis_apps/core/data/services/token_storage.dart';
-import 'package:fortis_apps/core/data/services/user_storage.dart';
-import 'api_service.dart';
+import '../repositories/auth_repository.dart';
+import '../models/auth_model.dart';
+import 'token_storage.dart';
 
 class AuthService {
-  final Dio dio = ApiService().dio;
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
 
-  // Login
+  late AuthRepository _repository;
+
+  AuthService._internal() {
+    _repository = AuthRepositoryImpl();
+  }
+
+  // For testing
+  AuthService.withRepository(this._repository);
+
   Future<Map<String, dynamic>> login(String nip, String password) async {
     try {
-      final response = await dio.post('/auth/login', data: {
-        'nip': nip,
-        'password': password,
-      });
-
-      final data = response.data;
-
-      await TokenStorage.saveToken(data['access_token']);
-      await UserStorage.saveUser(data['user']);
-
-      return {'success': true, 'data': data};
-    } on DioException catch (e) {
-      String errorMessage = 'An error occurred';
-
-      if (e.response != null) {
-        if (e.response?.data is Map &&
-            e.response?.data['error'] != null) {
-          errorMessage = e.response?.data['error'];
-        } else if (e.response?.data is Map &&
-            e.response?.data['message'] != null) {
-          errorMessage = e.response?.data['message'];
-        } else {
-          errorMessage = e.message ?? 'Request error';
-        }
-      } else {
-        errorMessage = e.message ?? 'Could not connect to the server';
-      }
+      final loginResponse = await _repository.login(nip, password);
 
       return {
+        'success': true,
+        'message': 'Login successful',
+        'data': loginResponse.toJson(),
+        'user': loginResponse.user.toJson(),
+        'token': loginResponse.accessToken,
+      };
+    } catch (e) {
+      return {
         'success': false,
-        'message': errorMessage,
+        'message': e.toString().replaceFirst('Exception: ', ''),
       };
     }
   }
 
-  Future<Map<String, dynamic>?> getUser() async {
-    return await UserStorage.getUser();
-  }
-
-  Future<Map<String, dynamic>?> loadUser() async {
-    final cached = await getUser();
-    final token = await TokenStorage.getToken();
-    if (token == null) return null;
-
+  Future<Map<String, dynamic>> getCurrentUser() async {
     try {
-      final response = await dio.get('/auth/me');
+      final user = await _repository.getCurrentUser();
 
-      final newUser = response.data;
-      await UserStorage.saveUser(newUser);
-      return newUser;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        await logout();
-        print("Token expired or is not valid, logging out.");
-        return null;
-      }
-
-      print("Error load user: ${e.message}");
-      return cached;
+      return {
+        'success': true,
+        'user': user.toJson(),
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString().replaceFirst('Exception: ', ''),
+      };
     }
   }
 
-  Future<void> logout() async {
+  Future<Map<String, dynamic>> getUser() async {
     try {
-      await dio.post('/auth/logout');
-    } on DioException catch (e) {
-      print('Logout error: ${e.message}');
-    }
+      print('Fetching user data...');
+      final user = await _repository.refreshUser();
 
-    await TokenStorage.clearToken();
-    await UserStorage.clearUser();
+      return {
+        'success': true,
+        'user': user.toJson(),
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString().replaceFirst('Exception: ', ''),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> loadUser() async {
+    try {
+      final user = await _repository.getCurrentUser();
+
+      return {
+        'success': true,
+        'user': user.toJson(),
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString().replaceFirst('Exception: ', ''),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> logout() async {
+    try {
+      await _repository.logout();
+
+      return {
+        'success': true,
+        'message': 'Logged out successfully',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString().replaceFirst('Exception: ', ''),
+      };
+    }
   }
 
   Future<bool> refreshToken() async {
     try {
-      final token = await TokenStorage.getToken();
-      if (token == null) return false;
-
-      final response = await dio.post('/auth/refresh');
-      final data = response.data;
-      await TokenStorage.saveToken(data['access_token']);
+      await _repository.refreshToken();
       return true;
-
-    } on DioException catch (e) {
-      print('Refresh token failed: ${e.response?.data ?? e.message}');
+    } catch (e) {
       return false;
     }
   }
 
   Future<bool> isLoggedIn() async {
     final token = await TokenStorage.getToken();
-    return token != null;
+    return token != null && token.isNotEmpty;
   }
 }

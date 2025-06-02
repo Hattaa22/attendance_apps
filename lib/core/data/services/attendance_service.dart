@@ -10,6 +10,7 @@ class AttendanceService {
     _repository = AttendanceRepositoryImpl();
   }
 
+  // For testing
   AttendanceService.withRepository(this._repository);
 
   Future<Map<String, dynamic>> clockIn({

@@ -29,8 +29,8 @@ class MyApp extends StatelessWidget {
     // Token and user operations
     await _testTokenOperations();
 
-    // Logout flow tests (disable if you want to keep the session like if you want to test the app after login)
-    await _testLogoutFlow();
+    // Logout flow tests (disable if you want to keep the session)
+    // await _testLogoutFlow();
 
     print('=== All tests completed ===');
   }
@@ -46,11 +46,15 @@ class MyApp extends StatelessWidget {
         '   Result: ${isLoggedIn ? "❌ Already logged in" : "✅ Not logged in"}');
     await _delay();
 
-    // Test 3: Get user (should be null initially)
-    print('3. Testing getUser() - Initial state:');
-    var user = await authService.getUser();
-    print(
-        '   Result: ${user == null ? "✅ No user data" : "❌ User exists: $user"}');
+    // Test 2: Get user (should fail initially)
+    print('2. Testing getUser() - Initial state:');
+    var userResult = await authService.getUser();
+    if (userResult['success']) {
+      print('   ❌ User data exists: ${userResult['user']['name']}');
+    } else {
+      print('   ✅ No user data as expected');
+      print('   Message: ${userResult['message']}');
+    }
     await _delay();
   }
 
@@ -58,15 +62,17 @@ class MyApp extends StatelessWidget {
     print('\n🔐 LOGIN FLOW TESTS');
     print('─' * 30);
 
-    // Test 4: Login with valid credentials
-    print('4. Testing login() with credentials:');
+    // Test 3: Login with valid credentials
+    print('3. Testing login() with credentials:');
     final loginResult = await authService.login('10003', 'password');
+
     if (loginResult['success']) {
       print('   ✅ Login successful');
+      print('   Message: ${loginResult['message']}');
       print(
-          '   Token: ${loginResult['data']['access_token'] != null ? "Token received" : "No token"}');
-      print(
-          '   User: ${loginResult['data']['user'] != null ? "User data received" : "No user data"}');
+          '   Token: ${loginResult['token'] != null ? "Token received" : "No token"}');
+      print('   User: ${loginResult['user']['name'] ?? "No user name"}');
+      print('   NIP: ${loginResult['user']['nip'] ?? "No NIP"}');
     } else {
       print('   ❌ Login failed: ${loginResult['message']}');
     }
@@ -77,28 +83,25 @@ class MyApp extends StatelessWidget {
     print('\n📊 POST-LOGIN STATE TESTS');
     print('─' * 30);
 
-    // Test 5: Check if logged in after login
-    print('5. Testing isLoggedIn() after login:');
+    // Test 4: Check if logged in after login
+    print('4. Testing isLoggedIn() after login:');
     bool isLoggedIn = await authService.isLoggedIn();
     print(
         '   Result: ${isLoggedIn ? "✅ Successfully logged in" : "❌ Not logged in"}');
     await _delay();
 
-    // Test 6: Get token after login
-    print('6. Testing getToken() after login:');
-    bool? token = await authService.isLoggedIn();
-    print(
-        '   Result: ${token == true ? "✅ Token exists" : "❌ No token found"}');
-    await _delay();
+    // Test 5: Get stored user
+    print('5. Testing getUser() after login:');
+    var userResult = await authService.getUser();
 
-    // Test 7: Get stored user
-    print('7. Testing getUser() after login:');
-    var user = await authService.getUser();
-    print(
-        '   Result: ${user != null ? "✅ User data exists" : "❌ No user data"}');
-    if (user != null) {
-      print('   nip: ${user['nip'] ?? "N/A"}');
-      print('   User Name: ${user['name'] ?? "N/A"}');
+    if (userResult['success']) {
+      print('   ✅ User data retrieved');
+      print('   NIP: ${userResult['user']['nip'] ?? "N/A"}');
+      print('   Name: ${userResult['user']['name'] ?? "N/A"}');
+      print('   Email: ${userResult['user']['email'] ?? "N/A"}');
+      print('   Department: ${userResult['user']['department'] ?? "N/A"}');
+    } else {
+      print('   ❌ Failed to get user: ${userResult['message']}');
     }
     await _delay();
   }
@@ -107,29 +110,38 @@ class MyApp extends StatelessWidget {
     print('\n🔄 TOKEN & USER OPERATIONS');
     print('─' * 30);
 
-    // Test 8: Load user from API
-    print('8. Testing loadUser() from API:');
-    try {
-      var loadedUser = await authService.loadUser();
+    // Test 6: Get current user from API
+    print('6. Testing getCurrentUser() from API:');
+    var currentUserResult = await authService.getCurrentUser();
+
+    if (currentUserResult['success']) {
+      print('   ✅ Current user loaded from API');
+      print('   Name: ${currentUserResult['user']['name'] ?? "N/A"}');
+      print('   Email: ${currentUserResult['user']['email'] ?? "N/A"}');
+    } else {
       print(
-          '   Result: ${loadedUser != null ? "✅ User loaded from API" : "❌ Failed to load user from API"}');
-      if (loadedUser != null) {
-        print('   Data: $loadedUser');
-      }
-    } catch (e) {
-      print('   ❌ Error loading user: $e');
+          '   ❌ Failed to load current user: ${currentUserResult['message']}');
     }
     await _delay();
 
-    // Test 9: Refresh token
-    print('9. Testing refreshToken():');
-    try {
-      bool refreshSuccess = await authService.refreshToken();
+    // Test 7: Load user (with fallback to cache)
+    print('7. Testing loadUser():');
+    var loadUserResult = await authService.loadUser();
+
+    if (loadUserResult['success']) {
+      print('   ✅ User loaded successfully');
       print(
-          '   Result: ${refreshSuccess ? "✅ Token refreshed successfully" : "❌ Token refresh failed"}');
-    } catch (e) {
-      print('   ❌ Error refreshing token: $e');
+          '   Source: ${loadUserResult['user']['name'] != null ? "API or Cache" : "Unknown"}');
+    } else {
+      print('   ❌ Failed to load user: ${loadUserResult['message']}');
     }
+    await _delay();
+
+    // Test 8: Refresh token
+    print('8. Testing refreshToken():');
+    bool refreshSuccess = await authService.refreshToken();
+    print(
+        '   Result: ${refreshSuccess ? "✅ Token refreshed successfully" : "❌ Token refresh failed"}');
     await _delay();
   }
 
@@ -137,28 +149,36 @@ class MyApp extends StatelessWidget {
     print('\n🚪 LOGOUT FLOW TESTS');
     print('─' * 30);
 
-    // Test 10: Logout
-    print('10. Testing logout():');
-    try {
-      await authService.logout();
-      print('    ✅ Logout completed successfully');
-    } catch (e) {
-      print('    ❌ Error during logout: $e');
+    // Test 9: Logout
+    print('9. Testing logout():');
+    var logoutResult = await authService.logout();
+
+    if (logoutResult['success']) {
+      print('   ✅ Logout successful');
+      print('   Message: ${logoutResult['message']}');
+    } else {
+      print('   ❌ Logout failed: ${logoutResult['message']}');
     }
     await _delay();
 
-    // Test 11: Check if logged in after logout
-    print('11. Testing isLoggedIn() after logout:');
+    // Test 10: Check if logged in after logout
+    print('10. Testing isLoggedIn() after logout:');
     bool isLoggedIn = await authService.isLoggedIn();
     print(
-        '    Result: ${!isLoggedIn ? "✅ Successfully logged out" : "❌ Still logged in"}');
+        '   Result: ${!isLoggedIn ? "✅ Successfully logged out" : "❌ Still logged in"}');
     await _delay();
 
-    // Test 13: Verify user data cleared
-    print('13. Testing getUser() after logout:');
-    var user = await authService.getUser();
-    print(
-        '    Result: ${user == null ? "✅ User data cleared" : "❌ User data still exists"}');
+    // Test 11: Verify user data cleared
+    print('11. Testing getUser() after logout:');
+    var userResult = await authService.getUser();
+
+    if (userResult['success']) {
+      print('   ❌ User data still exists: ${userResult['user']['name']}');
+    } else {
+      print('   ✅ User data cleared as expected');
+      print('   Message: ${userResult['message']}');
+    }
+    await _delay();
   }
 
   Future<void> _delay() async {
@@ -180,7 +200,7 @@ class MyApp extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.settings, size: 64, color: Colors.blue),
+              Icon(Icons.security, size: 64, color: Colors.blue),
               SizedBox(height: 16),
               Text(
                 "Testing AuthService Methods",
@@ -191,6 +211,18 @@ class MyApp extends StatelessWidget {
                 "Check terminal for detailed results",
                 style: TextStyle(color: Colors.grey),
               ),
+              SizedBox(height: 16),
+              Text(
+                "Tests include:",
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+              Text("• Initial state validation"),
+              Text("• Login flow"),
+              Text("• Post-login state"),
+              Text("• Token operations"),
+              Text("• User data retrieval"),
+              Text("• Logout flow"),
             ],
           ),
         ),
