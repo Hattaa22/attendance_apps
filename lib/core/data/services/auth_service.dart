@@ -23,7 +23,6 @@ class AuthService {
     } on DioException catch (e) {
       String errorMessage = 'An error occurred';
 
-      // Coba ambil pesan error dari backend
       if (e.response != null) {
         if (e.response?.data is Map &&
             e.response?.data['error'] != null) {

@@ -1,0 +1,64 @@
+import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
+import '../services/api_service.dart';
+import '../models/attendance_model.dart';
+
+abstract class AttendanceRepository {
+  Future<AttendanceModel> clockIn({
+    required double latitude,
+    required double longitude,
+    required DateTime waktu,
+  });
+
+  Future<AttendanceModel> clockOut({
+    required double latitude,
+    required double longitude,
+    required DateTime waktu,
+  });
+}
+
+class AttendanceRepositoryImpl implements AttendanceRepository {
+  final Dio _dio;
+
+  AttendanceRepositoryImpl() : _dio = ApiService().dio;
+
+  @override
+  Future<AttendanceModel> clockIn({
+    required double latitude,
+    required double longitude,
+    required DateTime waktu,
+  }) async {
+    try {
+      final response = await _dio.post('/attendance/clock-in', data: {
+        'latitude': latitude,
+        'longitude': longitude,
+        'waktu': DateFormat('yyyy-MM-dd HH:mm:ss').format(waktu),
+      });
+
+      final attendance = AttendanceModel.fromJson(response.data['attendance']);
+      return attendance;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Clock-in gagal');
+    }
+  }
+
+  @override
+  Future<AttendanceModel> clockOut({
+    required double latitude,
+    required double longitude,
+    required DateTime waktu,
+  }) async {
+    try {
+      final response = await _dio.post('/attendance/clock-out', data: {
+        'latitude': latitude,
+        'longitude': longitude,
+        'waktu': DateFormat('yyyy-MM-dd HH:mm:ss').format(waktu),
+      });
+
+      final attendance = AttendanceModel.fromJson(response.data['attendance']);
+      return attendance;
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Clock-out gagal');
+    }
+  }
+}
