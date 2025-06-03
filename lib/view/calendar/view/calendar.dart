@@ -246,7 +246,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          context.go('/addMeeting');
+                          context.push('/calendar/add');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: blueMainColor,

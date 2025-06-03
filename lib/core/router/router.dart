@@ -30,14 +30,14 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const Home(),
     ),
     GoRoute(
-      name: '/calendar',
-      path: '/calendar',
-      builder: (context, state) => const CalendarPage(),
-    ),
-    GoRoute(
-      name: '/addMeeting',
-      path: '/addMeeting',
-      builder: (context, state) => const AddMeetingPage(),
-    ),
+          path: '/calendar',
+          builder: (context, state) => const CalendarPage(),
+          routes: [
+            GoRoute(
+              path: 'add',  // This will make the path /calendar/add
+              builder: (context, state) => const AddMeetingPage(),
+            ),
+          ],
+        ),
   ]
 );

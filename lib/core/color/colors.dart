@@ -7,6 +7,7 @@ const Color greenMainColor = Color.fromRGBO(67, 147, 108, 1);
 const Color greenSecondColor = Color.fromRGBO(46, 194, 43, 1);
 const Color deepNavyMainColor = Color.fromRGBO(23, 15, 79, 1);
 const Color greyNavColor = Color.fromRGBO(139, 139, 139, 1);
+const Color greyInputText = Color.fromRGBO(165, 165, 165, 1);
 const Color greyMainColor = Color.fromRGBO(244, 244, 244, 1);
 const Color redMainColor = Color.fromRGBO(255, 0, 0, 1);
 const Color yellowMainColor = Color.fromRGBO(255, 191, 43, 1);
