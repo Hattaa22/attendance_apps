@@ -314,8 +314,9 @@ class _CalendarPageState extends State<CalendarPage> {
                     eventLoader: _getEventsForDay,
                     calendarBuilders: CalendarBuilders(
                       markerBuilder: (context, date, events) {
-                        if (events.isEmpty || isSameDay(date, _selectedDay))
+                        if (events.isEmpty || isSameDay(date, _selectedDay)) {
                           return const SizedBox();
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(top: 30),
                           child: Wrap(
@@ -377,7 +378,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: blueMainColor,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 25, vertical: 16),
+                              horizontal: 20, vertical: 10),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(4)),
                         ),
