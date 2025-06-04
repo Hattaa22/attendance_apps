@@ -1,5 +1,6 @@
+import 'package:attendance_apps/view/leave/leave.dart';
 import 'package:flutter/material.dart';
-import 'package:attendance_apps/view/profile/setting.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MenuSettingsPage(),
+      home: const LeavePage(),
     );
   }
 }
