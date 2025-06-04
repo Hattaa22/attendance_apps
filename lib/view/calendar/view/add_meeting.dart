@@ -76,7 +76,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
       return StatefulBuilder(
         builder: (context, setDialogState) => Dialog(
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.only(top: 8),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -85,15 +85,17 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                   calendarType: CalendarDatePicker2Type.single,
                   selectedDayHighlightColor: blueMainColor,
                   weekdayLabelTextStyle: const TextStyle(
+                    fontSize: 14,
                     color: Colors.black87,
                     fontWeight: FontWeight.bold,
                   ),
                   controlsTextStyle: const TextStyle(
                     color: Colors.black,
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                   dayTextStyle: const TextStyle(
+                    fontSize: 13,
                     color: Colors.black,
                     fontWeight: FontWeight.normal,
                   ),
@@ -145,7 +147,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
+                          horizontal: 16,
                           vertical: 8,
                         ),
                       ),
@@ -216,7 +218,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                       fontSize: 18,
                       color: Colors.black,
                     ),
-                    spacing: 30,
+                    spacing: 15,
                     itemHeight: 40,
                     onTimeChange: (time) {
                       setDialogState(() {
@@ -250,7 +252,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                       fontSize: 18,
                       color: Colors.black,
                     ),
-                    spacing: 30,
+                    spacing: 15,
                     itemHeight: 40,
                     onTimeChange: (time) {
                       setDialogState(() {
