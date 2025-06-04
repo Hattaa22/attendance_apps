@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isValidEmail(String email) {
     if (!_emailRegex.hasMatch(email) || !email.contains("@")){
       setState(() {
-        _emailError = 'Email tidak valid';
+        _emailError = 'Invalid Email';
       });
       return false;
     }
@@ -241,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            context.go('/resetPassword');
+                            context.push('/resetPassword');
                           },
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,

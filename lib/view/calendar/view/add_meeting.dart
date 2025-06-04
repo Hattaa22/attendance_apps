@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:multiselect/multiselect.dart';
 import 'package:flutter_time_picker_spinner/flutter_time_picker_spinner.dart';
+import 'package:fortis_apps/widget_global/show_dialog_success/dialog_success.dart';
+import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 
 class AddMeetingPage extends StatefulWidget {
   const AddMeetingPage({super.key});
@@ -29,7 +31,6 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
     _descriptionController.addListener(_onFormChanged);
   }
 
-  // Add this method to trigger setState when form changes
   void _onFormChanged() {
     setState(() {
       
@@ -43,61 +44,138 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
       _selectedDepartment != null &&
       _selectedHeadDepartment != null &&
       _selectedTeamDepartment != null &&
-      _selectedTeamMembers.isNotEmpty &&
+      _selectedTeamMembers.length == 3 &&
       _selectedDate != null &&
       _startTime != null &&
       _endTime != null;
 
-  // Additional validation for Online meetings
   if (_selectedType == 'Online') {
     return baseValidation && _descriptionController.text.isNotEmpty;
   }
 
-  // For Offline meetings, description is optional
   return baseValidation;
 }
 
-  Future<void> _pilihTanggal(BuildContext context) async {
-    final DateTime? tanggal = await showDatePicker(
+  void _setMeeting(BuildContext context, String type) {
+    showDialog(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(), // Start from today
-      lastDate: DateTime(2100),
-      confirmText: 'Apply',
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: blueMainColor,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                backgroundColor: blueMainColor, // Button background color
-                foregroundColor: Colors.white, // Button text color
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+      barrierDismissible: false,
+      builder: (context) => CustomSuccessDialog(
+        title: type == 'Online' ? 'Online Meeting has been set!' : 'Offline Meeting has been set!',
+        message: type == 'Online' ? 'Departement team member will receive an email containing the meeting details and a link to join the online session.' : 'You will receive a notification as a reminder of the meeting’s time and physical location.',
+      ),
+    );
+  }
+
+  void _setDate(BuildContext context) {
+  DateTime? tempSelectedDate = _selectedDate;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CalendarDatePicker2(
+                  config: CalendarDatePicker2Config(
+                  calendarType: CalendarDatePicker2Type.single,
+                  selectedDayHighlightColor: blueMainColor,
+                  weekdayLabelTextStyle: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  controlsTextStyle: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  dayTextStyle: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.normal,
+                  ),
+                  selectedDayTextStyle: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  firstDate: DateTime(DateTime.now().year, 1, 1),
+                  lastDate: DateTime(DateTime.now().year, 12, 31),
+                  ),
+                  value: tempSelectedDate != null ? [tempSelectedDate] : [],
+                  onValueChanged: (dates) {
+                    // Update the temporary date and rebuild dialog
+                    setDialogState(() {
+                      tempSelectedDate = dates.first;
+                    });
+                  },
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Text(
+                          tempSelectedDate == null
+                              ? 'No date selected'
+                              : '${tempSelectedDate!.day}/${tempSelectedDate!.month}/${tempSelectedDate!.year}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: blueMainColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 8,
+                        ),
+                      ),
+                      onPressed: () {
+                        if (tempSelectedDate != null) {
+                          setState(() {
+                            _selectedDate = tempSelectedDate;
+                          });
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: const Text(
+                        'Apply',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
-          child: child!,
-        );
-      },
-    );
-
-    if (tanggal != null) {
-      setState(() {
-        _selectedDate = tanggal;
-      });
-    }
-  }
+        ),
+      );
+    },
+  );
+}
 
   void _setTime(BuildContext context) {
     TimeOfDay? tempStartTime = _startTime;
@@ -110,7 +188,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
           title: const Text(
             'Set time',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -127,6 +205,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  const SizedBox(width: 20),
                   TimePickerSpinner(
                     is24HourMode: false,
                     normalTextStyle: const TextStyle(
@@ -137,7 +216,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                       fontSize: 18,
                       color: Colors.black,
                     ),
-                    spacing: 50,
+                    spacing: 30,
                     itemHeight: 40,
                     onTimeChange: (time) {
                       setDialogState(() {
@@ -160,6 +239,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  const SizedBox(width: 20),
                   TimePickerSpinner(
                     is24HourMode: false,
                     normalTextStyle: const TextStyle(
@@ -170,7 +250,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                       fontSize: 18,
                       color: Colors.black,
                     ),
-                    spacing: 50,
+                    spacing: 30,
                     itemHeight: 40,
                     onTimeChange: (time) {
                       setDialogState(() {
@@ -198,13 +278,13 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                          horizontal: 12,
+                          vertical: 6,
                         ),
                         child: Text(
                           tempStartTime?.format(context) ?? '00:00 AM',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -219,13 +299,13 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                          horizontal: 12,
+                          vertical: 6,
                         ),
                         child: Text(
                           tempEndTime?.format(context) ?? '00:00 AM',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -242,8 +322,8 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 8,
+                      horizontal: 18,
+                      vertical: 6,
                     ),
                   ),
                   onPressed: () {
@@ -274,7 +354,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                   child: const Text(
                     'Apply',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -608,7 +688,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                         ),
                         const SizedBox(height: 8),
                         InkWell(
-                          onTap: () => _pilihTanggal(context),
+                          onTap: () => _setDate(context),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -717,7 +797,8 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
               ElevatedButton(
                 onPressed: _isFormValid()
                     ? () {
-                        // Add your submit logic here
+                        Navigator.of(context).pop();
+                        _setMeeting(context, _selectedType ?? '');
                       }
                     : null,
                 style: ElevatedButton.styleFrom(

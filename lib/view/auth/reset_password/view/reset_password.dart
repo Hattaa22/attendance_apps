@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:fortis_apps/widget_global/show_dialog_success/dialog_success.dart';
-import 'package:go_router/go_router.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key});
@@ -53,7 +52,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       barrierDismissible: false,
       builder: (context) => CustomSuccessDialog(
         title: 'Email terkirim!',
-        message: 'Kami telah mengirim link reset password\nke email $email',
+        message: 'Kami telah mengirim link reset password ke email $email',
       ),
     );
   }
@@ -65,9 +64,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         backgroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            context.go('/login');
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       backgroundColor: Colors.white,

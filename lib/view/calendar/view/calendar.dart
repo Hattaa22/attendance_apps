@@ -127,6 +127,128 @@ class _CalendarPageState extends State<CalendarPage> {
     };
   }
 
+  void _showEventDetails(BuildContext context, Event event) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: greyMainColor,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: const Text(
+                        'Meeting details',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDetailRow('Meeting title', event.title),
+                    _buildDetailRow('Meeting type', event.mode.toLowerCase()),
+                    _buildDetailRow('Department', event.department),
+                    _buildDetailRow('Head department', 'head department'),
+                    _buildDetailRow('Team department', 'Team adit'),
+                    _buildDetailRow('Department team member', 'Adit, Sopo, Jarwo'),
+                    _buildDetailRow('Date', DateFormat('dd/MM/yyyy').format(_selectedDay)),
+                    _buildDetailRow('Time', event.time),
+                    if (event.mode.toLowerCase() == 'online') ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Link & Description:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'https://zoom.us/meeting/abc123',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: blueMainColor,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                    backgroundColor: blueMainColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                  child: const Text(
+                    'Okay',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label : ',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<Event> _getEventsForDay(DateTime day) {
     return _events[DateTime.utc(day.year, day.month, day.day)] ?? [];
   }
@@ -186,10 +308,14 @@ class _CalendarPageState extends State<CalendarPage> {
                       outsideDaysVisible: false,
                       weekendTextStyle: TextStyle(color: redMainColor),
                     ),
+                    daysOfWeekStyle: const DaysOfWeekStyle(
+                      weekendStyle: TextStyle(color: redMainColor),
+                    ),
                     eventLoader: _getEventsForDay,
                     calendarBuilders: CalendarBuilders(
                       markerBuilder: (context, date, events) {
-                        if (events.isEmpty) return const SizedBox();
+                        if (events.isEmpty || isSameDay(date, _selectedDay))
+                          return const SizedBox();
                         return Padding(
                           padding: const EdgeInsets.only(top: 30),
                           child: Wrap(
@@ -246,7 +372,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          context.push('/calendar/add');
+                          context.push('/addMeeting');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: blueMainColor,
@@ -279,110 +405,112 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             if (eventsToday.isEmpty)
               const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 25),
                 child: Text("No events for this day."),
               )
             else
-              ...groupEventsByType(eventsToday)
-                  .entries
-                  .map((entry) => Container(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 6),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+              ...groupEventsByType(eventsToday).entries.map((entry) =>
+                  Container(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Event type header with dot
+                        Row(
                           children: [
-                            // Event type header with dot
-                            Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: _getEventColor(entry.key),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _getEventTypeTitle(entry.key),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: _getEventColor(entry.key),
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                            // List of events of this type
-                            ...entry.value.map((event) => Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 10),
-                                    const Divider(
-                                      height: 1,
-                                      thickness: 1,
-                                      color: Color(0xFFE0E0E0),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    // Date and Time
-                                    Row(
-                                      children: [
-                                        Text(
-                                          DateFormat('dd/MM/yyyy')
-                                              .format(_selectedDay),
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: greyNavColor,
-                                          ),
-                                        ),
-                                        Text(
-                                          ' | ${event.time}',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: greyNavColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    // Mode (Online/Offline)
-                                    Text(
-                                      event.mode,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: blueMainColor,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    // Event Title
-                                    Text(
-                                      event.title,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    // Department
-                                    Text(
-                                      event.department,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: greyNavColor,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
-                                  ],
-                                )),
+                            const SizedBox(width: 8),
+                            Text(
+                              _getEventTypeTitle(entry.key),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ],
                         ),
-                      )),
+                        // List of events of this type
+                        ...entry.value.map((event) => GestureDetector(
+                              onTap: () => _showEventDetails(context, event),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 10),
+                                  const Divider(
+                                    height: 1,
+                                    thickness: 1,
+                                    color: Color(0xFFE0E0E0),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  // Date and Time
+                                  Row(
+                                    children: [
+                                      Text(
+                                        DateFormat('dd/MM/yyyy')
+                                            .format(_selectedDay),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: greyNavColor,
+                                        ),
+                                      ),
+                                      Text(
+                                        ' | ${event.time}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: greyNavColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Mode (Online/Offline)
+                                  Text(
+                                    event.mode,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: blueMainColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  // Event Title
+                                  Text(
+                                    event.title,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  // Department
+                                  Text(
+                                    event.department,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: greyNavColor,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )),
+                      ],
+                    ),
+                  )),
             const SizedBox(height: 30),
           ],
         ),
