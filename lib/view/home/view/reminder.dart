@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fortis_apps/core/color/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ReminderPage extends StatefulWidget {
@@ -36,17 +37,12 @@ class _ReminderPageState extends State<ReminderPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Success icon
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF4CAF50),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 30,
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Image.asset(
+                    'assets/icon/tick-circle.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -55,8 +51,8 @@ class _ReminderPageState extends State<ReminderPage> {
                   'Set Reminder Saved!',
                   style: GoogleFonts.roboto(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                    color: pureBlack,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -66,8 +62,8 @@ class _ReminderPageState extends State<ReminderPage> {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.roboto(
                     fontSize: 14,
-                    color: Colors.grey[700],
-                    height: 1.4,
+                    color: pureBlack,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -77,6 +73,7 @@ class _ReminderPageState extends State<ReminderPage> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pop();
+                      Navigator.of(context).pop(true);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2463EB),

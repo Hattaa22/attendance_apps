@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:fortis_apps/view/home/view/checkin_details.dart';
-import 'package:fortis_apps/view/home/view/notification.dart';
-import 'package:fortis_apps/view/home/view/reminder.dart';
 import 'package:intl/intl.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:go_router/go_router.dart';
+
 import 'dart:async';
 
 class HomeBody extends StatefulWidget {
@@ -24,6 +23,8 @@ class _HomeBodyState extends State<HomeBody> {
 
   bool isClockedIn = false;
   bool isClockedOut = true;
+
+  bool isReminderActive = false;
 
   // Attendance statistics
   int presentsCount = 17;
@@ -271,7 +272,7 @@ class _HomeBodyState extends State<HomeBody> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Clock In Confirmed!',
+                  'Clock Out Confirmed!',
                   style: GoogleFonts.roboto(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
@@ -600,7 +601,6 @@ class _HomeBodyState extends State<HomeBody> {
       },
     );
   }
-  
 
   // Menampilkan dialog pemilihan bulan dengan navigasi tahun
   void _showMonthSelectionDialog() {
@@ -788,13 +788,18 @@ class _HomeBodyState extends State<HomeBody> {
                         ],
                       ),
                     ),
-                    SizedBox(
-                      width: 35,
-                      height: 35,
-                      child: Image.asset(
-                        'assets/icon/bell_pin_fill.png',
-                        color: whiteMainColor,
-                        fit: BoxFit.contain,
+                    GestureDetector(
+                      onTap: () {
+                        context.push('/notification');
+                      },
+                      child: SizedBox(
+                        width: 35,
+                        height: 35,
+                        child: Image.asset(
+                          'assets/icon/bell_pin_fill.png',
+                          color: whiteMainColor,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ],
@@ -825,8 +830,13 @@ class _HomeBodyState extends State<HomeBody> {
                     const SizedBox(width: 8),
                     Flexible(
                       child: GestureDetector(
-                        onTap: () {
-                          // Handle set reminder tap
+                        onTap: () async {
+                          final result = await context.push('/reminder');
+                          if (result == true) {
+                            setState(() {
+                              isReminderActive = true;
+                            });
+                          }
                         },
                         child: Container(
                           padding: EdgeInsets.symmetric(
@@ -844,7 +854,9 @@ class _HomeBodyState extends State<HomeBody> {
                               const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
-                                  'Set Reminder',
+                                  isReminderActive
+                                      ? 'Reminder Active'
+                                      : 'Set Reminder',
                                   style: GoogleFonts.roboto(
                                     fontSize: screenWidth < 360 ? 10 : 12,
                                     color: blueMainColor,
@@ -989,129 +1001,142 @@ class _HomeBodyState extends State<HomeBody> {
                       top: 0,
                       left: screenWidth * 0.05,
                       right: screenWidth * 0.05,
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Date
-                            Text(
-                              formattedDate,
-                              style: GoogleFonts.roboto(
-                                fontSize: 14,
-                                color: pureBlack,
-                                fontWeight: FontWeight.w600,
+                      child: GestureDetector(
+                        onTap: () {
+                          if (isClockedIn) {
+                            context.push('/checkinDetails');
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
                               ),
-                            ),
-                            const SizedBox(height: 8),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Date
+                              Text(
+                                formattedDate,
+                                style: GoogleFonts.roboto(
+                                  fontSize: 14,
+                                  color: pureBlack,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
 
-                            // Time and Clock In button row
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                // Tampilkan waktu hanya jika belum clock in
-                                if (!isClockedIn) ...[
-                                  Flexible(
-                                    flex: 2,
-                                    child: Text(
-                                      formattedTime,
-                                      style: GoogleFonts.roboto(
-                                        fontSize: 25,
-                                        fontWeight: FontWeight.bold,
-                                        color: pureBlack,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                ],
-                                // Tombol Clock In/Out
-                                Flexible(
-                                  flex: isClockedIn ? 1 : 2,
-                                  child: SizedBox(
-                                    width: isClockedIn
-                                        ? double.infinity
-                                        : screenWidth * 0.3,
-                                    child: ElevatedButton(
-                                      onPressed: () => _showClockDialog(),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: isClockedIn
-                                            ? Colors.red
-                                            : blueMainColor,
-                                        foregroundColor: whiteMainColor,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal:
-                                              screenWidth < 360 ? 16 : 24,
-                                          vertical: 8,
-                                        ),
-                                        minimumSize: const Size.fromHeight(40),
-                                        elevation: 0,
-                                      ),
+                              // Time and Clock In button row
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Tampilkan waktu hanya jika belum clock in
+                                  if (!isClockedIn) ...[
+                                    Flexible(
+                                      flex: 2,
                                       child: Text(
-                                        isClockedIn ? 'Clock Out' : 'Clock In',
+                                        formattedTime,
                                         style: GoogleFonts.roboto(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: screenWidth < 360 ? 12 : 14,
+                                          fontSize: 25,
+                                          fontWeight: FontWeight.bold,
+                                          color: pureBlack,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                  ],
+                                  // Tombol Clock In/Out
+                                  Flexible(
+                                    flex: isClockedIn ? 1 : 2,
+                                    child: SizedBox(
+                                      width: isClockedIn
+                                          ? double.infinity
+                                          : screenWidth * 0.3,
+                                      child: ElevatedButton(
+                                        onPressed: () => _showClockDialog(),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: isClockedIn
+                                              ? Colors.red
+                                              : blueMainColor,
+                                          foregroundColor: whiteMainColor,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal:
+                                                screenWidth < 360 ? 16 : 24,
+                                            vertical: 8,
+                                          ),
+                                          minimumSize:
+                                              const Size.fromHeight(40),
+                                          elevation: 0,
+                                        ),
+                                        child: Text(
+                                          isClockedIn
+                                              ? 'Clock Out'
+                                              : 'Clock In',
+                                          style: GoogleFonts.roboto(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize:
+                                                screenWidth < 360 ? 12 : 14,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-
-                            Center(
-                              child: Container(
-                                width: screenWidth * 0.8,
-                                height: 1,
-                                color: Colors.grey[300],
+                                ],
                               ),
-                            ),
+                              const SizedBox(height: 24),
 
-                            const SizedBox(height: 20),
+                              Center(
+                                child: Container(
+                                  width: screenWidth * 0.8,
+                                  height: 1,
+                                  color: Colors.grey[300],
+                                ),
+                              ),
 
-                            // Time status icons
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _buildTimeStatusCard(
-                                  imagePath: 'assets/icon/clock_fill.png',
-                                  time: '08:00 AM',
-                                  label: 'Clock In',
-                                  screenWidth: screenWidth,
-                                ),
-                                _buildTimeStatusCard(
-                                  imagePath: 'assets/icon/clock_fill.png',
-                                  time: '04:00 PM',
-                                  label: 'Clock Out',
-                                  screenWidth: screenWidth,
-                                ),
-                                _buildTimeStatusCard(
-                                  imagePath: 'assets/icon/clock_fill.png',
-                                  time: '00:00:00',
-                                  label: 'Working Hrs',
-                                  screenWidth: screenWidth,
-                                ),
-                              ],
-                            ),
-                          ],
+                              const SizedBox(height: 20),
+
+                              // Time status icons
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _buildTimeStatusCard(
+                                    imagePath: 'assets/icon/Clock_fill.png',
+                                    time: '08:00 AM',
+                                    label: 'Clock In',
+                                    screenWidth: screenWidth,
+                                  ),
+                                  _buildTimeStatusCard(
+                                    imagePath: 'assets/icon/Clock_fill.png',
+                                    time: '04:00 PM',
+                                    label: 'Clock Out',
+                                    screenWidth: screenWidth,
+                                  ),
+                                  _buildTimeStatusCard(
+                                    imagePath: 'assets/icon/Clock_fill.png',
+                                    time: '00:00:00',
+                                    label: 'Working Hrs',
+                                    screenWidth: screenWidth,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

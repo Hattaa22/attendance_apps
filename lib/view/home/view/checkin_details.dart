@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:fortis_apps/core/color/colors.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:go_router/go_router.dart';
 
 class CheckInDetailsPage extends StatefulWidget {
   const CheckInDetailsPage({super.key});
@@ -12,6 +16,9 @@ class CheckInDetailsPage extends StatefulWidget {
 class _CheckInDetailsPageState extends State<CheckInDetailsPage> {
   DateTime selectedDate = DateTime.now();
 
+  bool isClockedIn = true;
+  bool isClockedOut = false;
+
   void _pickDate() async {
     await showCustomCalendarDialog(context, selectedDate, (picked) {
       setState(() {
@@ -20,13 +27,558 @@ class _CheckInDetailsPageState extends State<CheckInDetailsPage> {
     });
   }
 
+  void _showClockDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (BuildContext context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header dialog dengan judul dinamis dan tombol close
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox(width: 24),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          !isClockedIn
+                              ? 'Clock In Present'
+                              : 'Clock Out Present',
+                          style: GoogleFonts.roboto(
+                              fontWeight: FontWeight.w500, fontSize: 18),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 24,
+                      child: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Tombol metode clock
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        _showOneClickConfirmationDialog();
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        color: isClockedIn ? Colors.red : blueMainColor,
+                        child: Container(
+                          width: 110,
+                          height: 110,
+                          padding: const EdgeInsets.all(5),
+                          child: Column(
+                            children: [
+                              Image.asset('assets/icon/one-click.png',
+                                  width: 66, height: 66, color: whiteMainColor),
+                              const SizedBox(height: 5),
+                              Text('One Click',
+                                  style: GoogleFonts.roboto(
+                                      fontWeight: FontWeight.w500,
+                                      color: whiteMainColor)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        _showQrCodeScannerDialog();
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        color: isClockedIn ? Colors.red : blueMainColor,
+                        child: Container(
+                          width: 110,
+                          height: 110,
+                          padding: const EdgeInsets.all(5),
+                          child: Column(
+                            children: [
+                              Image.asset('assets/icon/qr-code.png',
+                                  width: 66, height: 66, color: whiteMainColor),
+                              const SizedBox(height: 5),
+                              Text('QR Code',
+                                  style: GoogleFonts.roboto(
+                                      fontWeight: FontWeight.bold,
+                                      color: whiteMainColor)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSuccessClockOutDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Image.asset(
+                    'assets/icon/tick-circle.png',
+                    width: 24,
+                    height: 25,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Clock Out Confirmed!',
+                  style: GoogleFonts.roboto(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: pureBlack,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'You have successfully clocked out at\n04:00 PM on Monday 16 June 2025.\nThank you for your hard work today!',
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: blueMainColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.go('/');
+                    },
+                    child: Text(
+                      'Okay!',
+                      style: GoogleFonts.roboto(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showQrCodeScannerDialog() {
+    final MobileScannerController cameraController = MobileScannerController();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: double.infinity,
+            height: 350,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: MobileScanner(
+                                controller: cameraController,
+                                onDetect: (capture) {
+                                  final List<Barcode> barcodes =
+                                      capture.barcodes;
+                                  for (final barcode in barcodes) {
+                                    if (barcode.rawValue != null) {
+                                      cameraController.dispose();
+                                      Navigator.pop(context);
+
+                                      bool wasClockIn = !isClockedIn;
+
+                                      setState(() {
+                                        if (!isClockedIn) {
+                                          isClockedIn = true;
+                                          isClockedOut = false;
+                                        } else {
+                                          // Untuk Clock Out, kembali ke state awal
+                                          isClockedIn = false;
+                                          isClockedOut = true;
+                                        }
+                                      });
+
+                                      Future.delayed(
+                                          Duration(milliseconds: 100), () {
+                                        // Tampilkan dialog berdasarkan aksi yang dilakukan
+                                        if (wasClockIn) {
+                                          _showSuccessClockInDialog();
+                                        } else {
+                                          _showSuccessClockOutDialog();
+                                        }
+                                      });
+                                      return;
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ImageIcon(
+                                  AssetImage('assets/icon/scan-barcode.png'),
+                                  color: Colors.white,
+                                  size: 150,
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Scan QR Code',
+                            style: GoogleFonts.roboto(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Align QR code within the frame',
+                            style: GoogleFonts.roboto(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      cameraController.dispose();
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showOneClickConfirmationDialog() {
+    final now = DateTime.now();
+    final timeFormatter = DateFormat('hh:mm a');
+    final formattedTime = timeFormatter.format(now);
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 24),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          !isClockedIn
+                              ? 'Clock In Present'
+                              : 'Want to Clock Out ?',
+                          style: GoogleFonts.roboto(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 22,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 24,
+                      child: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ),
+                  ],
+                ),
+                !isClockedIn
+                    ? Image.asset(
+                        'assets/icon/clock-in-present.png',
+                        width: 80,
+                        height: 80,
+                        color: blueMainColor,
+                      )
+                    : const SizedBox.shrink(),
+                !isClockedIn
+                    ? Text(
+                        'One Click',
+                        style: GoogleFonts.roboto(
+                          fontWeight: FontWeight.w500,
+                          color: blueMainColor,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+                const SizedBox(height: 15),
+                Text(
+                  !isClockedIn
+                      ? 'Are Sure Clock In this at \n$formattedTime ?'
+                      : 'Are Sure Clock Out this at \n$formattedTime ?',
+                  style: GoogleFonts.roboto(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: whiteMainColor),
+                        minimumSize: Size(140, 40),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        'No',
+                        style: GoogleFonts.roboto(
+                          color: blueMainColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            isClockedIn ? Colors.red : blueMainColor,
+                        minimumSize: Size(140, 40),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+
+                        bool wasClockIn = !isClockedIn;
+
+                        setState(() {
+                          if (!isClockedIn) {
+                            isClockedIn = true;
+                            isClockedOut = false;
+                          } else {
+                            // Untuk Clock Out, kembali ke state awal
+                            isClockedIn = false;
+                            isClockedOut = true;
+                          }
+                        });
+
+                        Future.delayed(Duration(milliseconds: 100), () {
+                          // Tampilkan dialog berdasarkan aksi yang dilakukan
+                          if (wasClockIn) {
+                            _showSuccessClockInDialog();
+                          } else {
+                            _showSuccessClockOutDialog();
+                          }
+                        });
+                      },
+                      child: Text(
+                        'Yes!',
+                        style: GoogleFonts.roboto(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSuccessClockInDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Image.asset(
+                    'assets/icon/tick-circle.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Clock In Confirmed!',
+                  style: GoogleFonts.roboto(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: pureBlack,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'You have successfully clocked in at\n08:00 AM on Monday 16 June 2025.\nHave a good day and have a productive\nday!',
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: blueMainColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop(isClockedOut);
+                      context.go('/');
+                    },
+                    child: Text(
+                      'Okey!',
+                      style: GoogleFonts.roboto(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateStr = DateFormat('EEEE, d MMMM yyyy').format(selectedDate);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clock In details'),
+        title: const Text('Clock Out details'),
         leading: const BackButton(),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -48,17 +600,28 @@ class _CheckInDetailsPageState extends State<CheckInDetailsPage> {
                   Text(dateStr,
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 200, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _showClockDialog(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        minimumSize: const Size.fromHeight(40),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Clock Out',
+                        style: GoogleFonts.roboto(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
-                    onPressed: () {},
-                    child: const Text("Clock Out",
-                        style: TextStyle(color: Colors.white)),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -105,7 +668,11 @@ class _CheckInDetailsPageState extends State<CheckInDetailsPage> {
                 TextButton.icon(
                   onPressed: _pickDate,
                   label: const Text('Today'),
-                  icon: const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2463EB),),
+                  icon: const Icon(
+                    Icons.calendar_today,
+                    size: 18,
+                    color: Color(0xFF2463EB),
+                  ),
                   style: TextButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -196,7 +763,7 @@ Future<void> showCustomCalendarDialog(BuildContext context,
                         ],
                       ),
                       todayTextStyle: const TextStyle(
-                        color: Color(0xFF2463EB), 
+                        color: Color(0xFF2463EB),
                       ),
                       selectedTextStyle: const TextStyle(color: Colors.white),
                       weekendTextStyle: const TextStyle(color: Colors.red),
@@ -235,7 +802,7 @@ Future<void> showCustomCalendarDialog(BuildContext context,
                         },
                         child: const Text(
                           'Apply',
-                          style: const TextStyle(color: Colors.white),
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
                     ],
