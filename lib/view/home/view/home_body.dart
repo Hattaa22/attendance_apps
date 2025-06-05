@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fortis_apps/view/home/view/checkin_details.dart';
+import 'package:fortis_apps/view/home/view/notification.dart';
+import 'package:fortis_apps/view/home/view/reminder.dart';
 import 'package:intl/intl.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -413,6 +416,7 @@ class _HomeBodyState extends State<HomeBody> {
       },
     );
   }
+  
 
   @override
   Widget build(BuildContext context) {
