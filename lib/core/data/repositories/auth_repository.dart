@@ -19,39 +19,20 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<LoginResponse> login(String nip, String password) async {
-    print('DEBUG: Starting login process...');
-    print('DEBUG: NIP: $nip');
-
     try {
-      print('DEBUG: Making login API call to /auth/login');
       final response = await _dio.post('/auth/login', data: {
         'nip': nip,
         'password': password,
       }).timeout(Duration(seconds: 15));
 
-      print('DEBUG: Login API response status: ${response.statusCode}');
-      print('DEBUG: Login API response data: ${response.data}');
-
-      print('DEBUG: Parsing LoginResponse...');
       final loginResponse = LoginResponse.fromJson(response.data);
-      print('DEBUG: LoginResponse parsed successfully');
 
-      print('DEBUG: Saving token...');
       await TokenStorage.saveToken(loginResponse.accessToken);
-      print('DEBUG: Token saved successfully');
 
-      print('DEBUG: Saving user data...');
       await UserStorage.saveUser(loginResponse.user.toJson());
-      print('DEBUG: User data saved successfully');
 
       return loginResponse;
     } on DioException catch (e) {
-      print('DEBUG: DioException caught');
-      print('DEBUG: Status Code: ${e.response?.statusCode}');
-      print('DEBUG: Response Data: ${e.response?.data}');
-      print('DEBUG: Error Type: ${e.type}');
-      print('DEBUG: Error Message: ${e.message}');
-
       String errorMessage = 'Login failed';
 
       if (e.response?.data is Map) {
@@ -62,7 +43,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
       throw Exception(errorMessage);
     } catch (e) {
-      print('DEBUG: Other exception: $e');
       throw Exception('Login failed: $e');
     }
   }
@@ -91,20 +71,33 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserModel> refreshUser() async {
+    print('DEBUG: refreshUser() called');
+
     try {
       if (await _isAuthenticated()) {
-        return await getCurrentUser();
+        print('DEBUG: User authenticated, calling getCurrentUser...');
+
+        return await getCurrentUser().timeout(
+          Duration(seconds: 8),
+          onTimeout: () {
+            print('DEBUG: getCurrentUser() timed out, falling back to cache');
+            throw Exception('API timeout');
+          },
+        );
       }
     } catch (e) {
-      print('Failed to refresh from API: $e');
+      print('DEBUG: Failed to refresh from API: $e');
     }
 
+    print('DEBUG: Falling back to cached data');
     // Fall back to cached data
     final cachedUserData = await UserStorage.getUser();
     if (cachedUserData != null) {
+      print('DEBUG: Returning cached user data');
       return UserModel.fromJson(cachedUserData);
     }
 
+    print('DEBUG: No user data available');
     throw Exception('No user data available');
   }
 

@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
     await _testTokenOperations();
 
     // Logout flow tests (disable if you want to keep the session)
-    // await _testLogoutFlow();
+    await _testLogoutFlow();
 
     print('=== All tests completed ===');
   }

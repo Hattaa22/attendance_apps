@@ -51,7 +51,6 @@ class AuthService {
 
   Future<Map<String, dynamic>> getUser() async {
     try {
-      print('Fetching user data...');
       final user = await _repository.refreshUser();
 
       return {
