@@ -3,7 +3,7 @@ import 'package:fortis_apps/view/profile/view/edit_profile_photo.dart';
 import 'package:inner_shadow_widget/inner_shadow_widget.dart';
 
 class MenuSettingsPage extends StatefulWidget {
-  const MenuSettingsPage({Key? key}) : super(key: key);
+  const MenuSettingsPage({super.key});
 
   @override
   State<MenuSettingsPage> createState() => _MenuSettingsPageState();
@@ -403,7 +403,7 @@ class _MenuSettingsPageState extends State<MenuSettingsPage> {
 
 // Example of how to set up the theme in your MaterialApp
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {

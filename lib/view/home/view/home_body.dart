@@ -17,6 +17,8 @@ class _HomeBodyState extends State<HomeBody> {
   final String userName = "sawaw";
   final String location = "Malang, East Java";
 
+  String selectedMonth = DateFormat('MMM').format(DateTime.now()).toUpperCase();
+
   bool isClockedIn = false;
   bool isClockedOut = true;
 
@@ -29,9 +31,10 @@ class _HomeBodyState extends State<HomeBody> {
   DateTime _currentTime = DateTime.now();
 
   @override
+
+  // Membuat timer yang berjalan terus - menerus perdetik
   void initState() {
     super.initState();
-    // Start timer to update time every second
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
         _currentTime = DateTime.now();
@@ -39,33 +42,32 @@ class _HomeBodyState extends State<HomeBody> {
     });
   }
 
+  // Membatalkan timer saat widget dihapus agar tidak terus berjalan di background
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
   }
 
-  // Method untuk menampilkan pop up Clock In
+  // Menampilkan dialog pilihan metode clock in/out dengan dua opsi tombol:
+  // "One Click" dan "QR Code", warna tombol berubah sesuai status clock.
   void _showClockDialog() {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.5), // Tambahkan gray opacity
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Header dialog dengan judul dinamis dan tombol close
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(width: 24),
                     Expanded(
@@ -73,11 +75,9 @@ class _HomeBodyState extends State<HomeBody> {
                         child: Text(
                           !isClockedIn
                               ? 'Clock In Present'
-                              : 'Clock Out Present', // Ubah text
+                              : 'Clock Out Present',
                           style: GoogleFonts.roboto(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 18,
-                          ),
+                              fontWeight: FontWeight.w500, fontSize: 18),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -94,10 +94,10 @@ class _HomeBodyState extends State<HomeBody> {
                   ],
                 ),
                 const SizedBox(height: 12),
+                // Tombol metode clock
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // One Click Card - Ubah warna berdasarkan status
                     InkWell(
                       onTap: () {
                         Navigator.of(context).pop();
@@ -105,38 +105,26 @@ class _HomeBodyState extends State<HomeBody> {
                       },
                       child: Card(
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        color: isClockedIn
-                            ? Colors.red
-                            : blueMainColor, // Ubah warna
+                            borderRadius: BorderRadius.circular(8)),
+                        color: isClockedIn ? Colors.red : blueMainColor,
                         child: Container(
                           width: 110,
                           height: 110,
                           padding: const EdgeInsets.all(5),
                           child: Column(
                             children: [
-                              Image.asset(
-                                'assets/icon/one-click.png',
-                                width: 66,
-                                height: 66,
-                                color: whiteMainColor,
-                              ),
+                              Image.asset('assets/icon/one-click.png',
+                                  width: 66, height: 66, color: whiteMainColor),
                               const SizedBox(height: 5),
-                              Text(
-                                'One Click',
-                                style: GoogleFonts.roboto(
-                                  fontWeight: FontWeight.bold,
-                                  color: whiteMainColor,
-                                ),
-                              ),
+                              Text('One Click',
+                                  style: GoogleFonts.roboto(
+                                      fontWeight: FontWeight.w500,
+                                      color: whiteMainColor)),
                             ],
                           ),
                         ),
                       ),
                     ),
-
-                    // QR Code Card - Ubah warna berdasarkan status
                     InkWell(
                       onTap: () {
                         Navigator.of(context).pop();
@@ -144,31 +132,21 @@ class _HomeBodyState extends State<HomeBody> {
                       },
                       child: Card(
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        color: isClockedIn
-                            ? Colors.red
-                            : blueMainColor, // Ubah warna
+                            borderRadius: BorderRadius.circular(8)),
+                        color: isClockedIn ? Colors.red : blueMainColor,
                         child: Container(
                           width: 110,
                           height: 110,
                           padding: const EdgeInsets.all(5),
                           child: Column(
                             children: [
-                              Image.asset(
-                                'assets/icon/qr-code.png',
-                                width: 66,
-                                height: 66,
-                                color: whiteMainColor,
-                              ),
+                              Image.asset('assets/icon/qr-code.png',
+                                  width: 66, height: 66, color: whiteMainColor),
                               const SizedBox(height: 5),
-                              Text(
-                                'QR Code',
-                                style: GoogleFonts.roboto(
-                                  fontWeight: FontWeight.bold,
-                                  color: whiteMainColor,
-                                ),
-                              ),
+                              Text('QR Code',
+                                  style: GoogleFonts.roboto(
+                                      fontWeight: FontWeight.bold,
+                                      color: whiteMainColor)),
                             ],
                           ),
                         ),
@@ -184,11 +162,11 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
-  // Tambahkan method ini setelah method _showOneClickConfirmationDialog()
+  // Menampilkan dialog konfirmasi sukses clock in
   void _showSuccessClockInDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false, // Tidak bisa ditutup dengan tap di luar
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
@@ -202,17 +180,12 @@ class _HomeBodyState extends State<HomeBody> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 30,
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Image.asset(
+                    'assets/icon/tick-circle.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -220,7 +193,7 @@ class _HomeBodyState extends State<HomeBody> {
                   'Clock In Confirmed!',
                   style: GoogleFonts.roboto(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w500,
                     color: pureBlack,
                   ),
                 ),
@@ -248,7 +221,7 @@ class _HomeBodyState extends State<HomeBody> {
                       Navigator.of(context).pop();
                     },
                     child: Text(
-                      'Okay!',
+                      'Okey!',
                       style: GoogleFonts.roboto(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -264,11 +237,12 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
+  // Menampilkan dialog konfirmasi sukses clock out
   void _showSuccessClockOutDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.5), // Gray opacity
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
@@ -282,25 +256,22 @@ class _HomeBodyState extends State<HomeBody> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 30,
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Image.asset(
+                    'assets/icon/tick-circle.png',
+                    width: 24,
+                    height: 25,
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Clock Out Confirmed!',
+                  'Clock In Confirmed!',
                   style: GoogleFonts.roboto(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w500,
                     color: pureBlack,
                   ),
                 ),
@@ -344,6 +315,7 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
+  // Menampilkan dialog scan qr code
   void _showQrCodeScannerDialog() {
     final MobileScannerController cameraController = MobileScannerController();
     showDialog(
@@ -376,7 +348,6 @@ class _HomeBodyState extends State<HomeBody> {
                               borderRadius: BorderRadius.circular(16),
                               child: MobileScanner(
                                 controller: cameraController,
-                                // Di dalam onDetect callback MobileScanner, ganti bagian ini:
                                 onDetect: (capture) {
                                   final List<Barcode> barcodes =
                                       capture.barcodes;
@@ -384,6 +355,9 @@ class _HomeBodyState extends State<HomeBody> {
                                     if (barcode.rawValue != null) {
                                       cameraController.dispose();
                                       Navigator.pop(context);
+
+                                      bool wasClockIn = !isClockedIn;
+
                                       setState(() {
                                         if (!isClockedIn) {
                                           isClockedIn = true;
@@ -394,10 +368,11 @@ class _HomeBodyState extends State<HomeBody> {
                                           isClockedOut = true;
                                         }
                                       });
+
                                       Future.delayed(
                                           Duration(milliseconds: 100), () {
-                                        // Tampilkan dialog yang sesuai
-                                        if (isClockedIn) {
+                                        // Tampilkan dialog berdasarkan aksi yang dilakukan
+                                        if (wasClockIn) {
                                           _showSuccessClockInDialog();
                                         } else {
                                           _showSuccessClockOutDialog();
@@ -470,6 +445,7 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
+  // Menampilkan dialog konfirmasi saat one click
   void _showOneClickConfirmationDialog() {
     final now = DateTime.now();
     final timeFormatter = DateFormat('hh:mm a');
@@ -521,39 +497,35 @@ class _HomeBodyState extends State<HomeBody> {
                     ),
                   ],
                 ),
-                SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: Center(
-                    child: Image.asset(
-                      !isClockedIn
-                          ? 'assets/icon/clock-in-present.png'
-                          : 'assets/icon/timer-pause-big-icon.png',
-                      width: 100,
-                      height: 100,
-                      color: blueMainColor,
-                    ),
-                  ),
-                ),
-                Text(
-                  'One Click',
-                  style: GoogleFonts.roboto(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w500,
-                    color: blueMainColor,
-                  ),
-                ),
-                const SizedBox(height: 20),
+                !isClockedIn
+                    ? Image.asset(
+                        'assets/icon/clock-in-present.png',
+                        width: 80,
+                        height: 80,
+                        color: blueMainColor,
+                      )
+                    : const SizedBox.shrink(),
+                !isClockedIn
+                    ? Text(
+                        'One Click',
+                        style: GoogleFonts.roboto(
+                          fontWeight: FontWeight.w500,
+                          color: blueMainColor,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+                const SizedBox(height: 15),
                 Text(
                   !isClockedIn
-                      ? 'Are Sure Clock In this $formattedTime ?'
-                      : 'Are Sure Clock Out this $formattedTime ?',
+                      ? 'Are Sure Clock In this at \n$formattedTime ?'
+                      : 'Are Sure Clock Out this at \n$formattedTime ?',
                   style: GoogleFonts.roboto(
                     fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 22),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -570,14 +542,15 @@ class _HomeBodyState extends State<HomeBody> {
                       child: Text(
                         'No',
                         style: GoogleFonts.roboto(
-                          color: Colors.black,
+                          color: blueMainColor,
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: blueMainColor,
+                        backgroundColor:
+                            isClockedIn ? Colors.red : blueMainColor,
                         minimumSize: Size(140, 40),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -585,6 +558,9 @@ class _HomeBodyState extends State<HomeBody> {
                       ),
                       onPressed: () {
                         Navigator.of(context).pop();
+
+                        bool wasClockIn = !isClockedIn;
+
                         setState(() {
                           if (!isClockedIn) {
                             isClockedIn = true;
@@ -595,8 +571,14 @@ class _HomeBodyState extends State<HomeBody> {
                             isClockedOut = true;
                           }
                         });
+
                         Future.delayed(Duration(milliseconds: 100), () {
-                          _showSuccessClockInDialog();
+                          // Tampilkan dialog berdasarkan aksi yang dilakukan
+                          if (wasClockIn) {
+                            _showSuccessClockInDialog();
+                          } else {
+                            _showSuccessClockOutDialog();
+                          }
                         });
                       },
                       child: Text(
@@ -616,10 +598,128 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
+  // Menampilkan dialog pemilihan bulan dengan navigasi tahun
+  void _showMonthSelectionDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.arrow_back_ios, size: 18),
+                      onPressed: () {
+                        // Logic untuk tahun sebelumnya
+                      },
+                    ),
+                    Text(
+                      '2025',
+                      style: GoogleFonts.roboto(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.arrow_forward_ios, size: 18),
+                      onPressed: () {
+                        // Logic untuk tahun selanjutnya
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                GridView.count(
+                  shrinkWrap: true,
+                  crossAxisCount: 3,
+                  childAspectRatio: 2.5,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  children: [
+                    _buildMonthButton('Jan', false),
+                    _buildMonthButton('Feb', false),
+                    _buildMonthButton('Mar', false),
+                    _buildMonthButton('Apr', false),
+                    _buildMonthButton('May', false),
+                    _buildMonthButton('Jun', true),
+                    _buildMonthButton('Jul', false),
+                    _buildMonthButton('Aug', false),
+                    _buildMonthButton('Sep', false),
+                    _buildMonthButton('Oct', false),
+                    _buildMonthButton('Nov', false),
+                    _buildMonthButton('Dec', false),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: blueMainColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'Apply',
+                      style: GoogleFonts.roboto(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Membuat tombol bulan dengan style berbeda jika dipilih atau tidak
+  Widget _buildMonthButton(String month, bool isSelected) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected ? blueMainColor : Colors.grey[100],
+        foregroundColor: isSelected ? Colors.white : Colors.black,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        elevation: 0,
+      ),
+      onPressed: () {
+        // Logic untuk memilih bulan
+      },
+      child: Text(
+        month,
+        style: GoogleFonts.roboto(
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormatter = DateFormat('EEEE, d MMMM yyyy');
-    final timeFormatter = DateFormat('HH:mm:ss');
+    final timeFormatter = DateFormat('HH:mm:ss a');
     final formattedDate = dateFormatter.format(_currentTime);
     final formattedTime = timeFormatter.format(_currentTime);
     final screenWidth = MediaQuery.of(context).size.width;
@@ -640,30 +740,29 @@ class _HomeBodyState extends State<HomeBody> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Column(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: whiteWithOpacity,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(8),
+                            child: Image.asset(
+                              'assets/icon/location.png',
+                              color: whiteMainColor,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: whiteWithOpacity,
-                                  shape: BoxShape.circle,
-                                ),
-                                padding: EdgeInsets.all(4),
-                                child: ClipOval(
-                                  child: Image.asset(
-                                    'assets/icon/location.png',
-                                    color: whiteMainColor,
-                                    fit: BoxFit.contain,
-                                    width: 17,
-                                    height: 19,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
                               Text(
                                 'Location',
                                 style: GoogleFonts.roboto(
@@ -671,31 +770,27 @@ class _HomeBodyState extends State<HomeBody> {
                                   fontSize: 12,
                                 ),
                               ),
+                              const SizedBox(height: 2),
+                              Text(
+                                location,
+                                style: GoogleFonts.roboto(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            location,
-                            style: GoogleFonts.roboto(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
                           ),
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: whiteWithOpacity,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    SizedBox(
+                      width: 35,
+                      height: 35,
                       child: Image.asset(
-                        'assets/icon/notification.png',
-                        width: 28,
-                        height: 28,
+                        'assets/icon/bell_pin_fill.png',
                         color: whiteMainColor,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ],
@@ -804,39 +899,49 @@ class _HomeBodyState extends State<HomeBody> {
                                           ),
                                         ),
                                       ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF4285F4),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'APR',
-                                              style: GoogleFonts.roboto(
-                                                fontSize: 12,
+                                      GestureDetector(
+                                        onTap: () =>
+                                            _showMonthSelectionDialog(),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF4285F4),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                Icons.calendar_month,
                                                 color: Colors.white,
-                                                fontWeight: FontWeight.w600,
+                                                size: 14,
                                               ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Icon(
-                                              Icons.keyboard_arrow_down,
-                                              color: Colors.white,
-                                              size: 16,
-                                            ),
-                                          ],
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                selectedMonth,
+                                                style: GoogleFonts.roboto(
+                                                  fontSize: 12,
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              const Icon(
+                                                Icons.keyboard_arrow_down,
+                                                color: Colors.white,
+                                                size: 16,
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 25),
                                   Row(
                                     children: [
                                       Expanded(
@@ -918,7 +1023,7 @@ class _HomeBodyState extends State<HomeBody> {
                                   Flexible(
                                     flex: 2,
                                     child: Text(
-                                      '$formattedTime AM',
+                                      formattedTime,
                                       style: GoogleFonts.roboto(
                                         fontSize: 25,
                                         fontWeight: FontWeight.bold,
@@ -1031,7 +1136,7 @@ class _HomeBodyState extends State<HomeBody> {
           color: blueMainColor,
           fit: BoxFit.contain,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 3),
         Text(
           time,
           style: GoogleFonts.roboto(
@@ -1040,6 +1145,7 @@ class _HomeBodyState extends State<HomeBody> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        const SizedBox(height: 3),
         Text(
           label,
           style: GoogleFonts.roboto(
@@ -1055,32 +1161,43 @@ class _HomeBodyState extends State<HomeBody> {
   Widget _buildAttendanceCard(
       String title, String count, Color color, double screenWidth) {
     return Container(
-      padding: EdgeInsets.all(screenWidth < 360 ? 12 : 16),
+      padding: EdgeInsets.only(
+        right: 10,
+        left: 10,
+        bottom: 8,
+        top: 6,
+      ),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
         border: Border(
           top: BorderSide(color: color, width: 4),
         ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.roboto(
-              fontSize: 14,
-              color: pureBlack,
-              fontWeight: FontWeight.w600,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              title,
+              style: GoogleFonts.roboto(
+                fontSize: 16,
+                color: pureBlack,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
-          Text(
-            count,
-            style: GoogleFonts.roboto(
-              fontSize: screenWidth < 360 ? 16 : 20,
-              fontWeight: FontWeight.bold,
-              color: pureBlack,
+          const SizedBox(height: 20),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              count,
+              style: GoogleFonts.roboto(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
           ),
         ],
