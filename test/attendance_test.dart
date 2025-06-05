@@ -66,7 +66,6 @@ class MyApp extends StatelessWidget {
     if (clockInResult['success']) {
       print('   ✅ Clock-in successful');
       print('   Message: ${clockInResult['message']}');
-      print('   Status: ${clockInResult['attendance']['status']}');
     } else {
       print('   ❌ Clock-in failed: ${clockInResult['message']}');
     }
@@ -88,7 +87,6 @@ class MyApp extends StatelessWidget {
     if (clockOutResult['success']) {
       print('   ✅ Clock-out successful');
       print('   Message: ${clockOutResult['message']}');
-      print('   Status: ${clockOutResult['attendance']['status']}');
     } else {
       print('   ❌ Clock-out failed: ${clockOutResult['message']}');
     }

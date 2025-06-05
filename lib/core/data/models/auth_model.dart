@@ -15,11 +15,13 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      nip: json['nip'],
-      name: json['name'],
-      email: json['email'],
-      roleId: json['role_id'],
-      teamDepartmentId: json['team_department_id'],
+      nip: json['nip'].toString(),
+      name: json['name'].toString(),
+      email: json['email'].toString(),
+
+      // I dont know why but i have to parse these as int when in the production environment
+      roleId: json['role_id'] != null ? int.tryParse(json['role_id'].toString()) : null,
+      teamDepartmentId: json['team_department_id'] != null ? int.tryParse(json['team_department_id'].toString()) : null,
     );
   }
 
@@ -50,14 +52,22 @@ class LoginResponse {
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
-    return LoginResponse(
-      accessToken: json['access_token'],
-      refreshToken: json['refresh_token'],
-      user: UserModel.fromJson(json['user']),
-      tokenType: json['token_type'] ?? 'Bearer',
-      expiresIn: json['expires_in'],
-    );
-  }
+  print('DEBUG: Starting LoginResponse parsing...');
+  print('DEBUG: access_token type: ${json['access_token'].runtimeType}');
+  print('DEBUG: expires_in: ${json['expires_in']} (${json['expires_in'].runtimeType})');
+  print('DEBUG: user data: ${json['user']}');
+  
+  final user = UserModel.fromJson(json['user']);
+  print('DEBUG: User parsed successfully');
+  
+  return LoginResponse(
+    accessToken: json['access_token'],
+    refreshToken: json['refresh_token'],
+    user: user,
+    tokenType: json['token_type'] ?? 'Bearer',
+    expiresIn: json['expires_in'],
+  );
+}
 
   Map<String, dynamic> toJson() {
     return {

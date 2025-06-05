@@ -1,5 +1,4 @@
 import '../repositories/auth_repository.dart';
-import '../models/auth_model.dart';
 import 'token_storage.dart';
 
 class AuthService {

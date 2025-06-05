@@ -41,7 +41,7 @@ dependencies:
   go_router: 
   dio: ^5.4.0           # HTTP client
   provider: ^6.1.1      # State management
-  flutter_secure_storage: ^5.0.2
+  flutter_secure_storage:
   flutter_dotenv: ^5.0.2
 
   # The following adds the Cupertino Icons font to your application.
