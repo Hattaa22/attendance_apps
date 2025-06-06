@@ -1,17 +1,19 @@
 import '../repositories/leave_repository.dart';
+import 'auth_service.dart';
 
 class LeaveService {
   static final LeaveService _instance = LeaveService._internal();
   factory LeaveService() => _instance;
 
   late LeaveRepository _repository;
+  final AuthService _authService;
 
-  LeaveService._internal() {
+  LeaveService._internal() : _authService = AuthService() {
     _repository = LeaveRepositoryImpl();
   }
 
   // For testing
-  LeaveService.withRepository(this._repository);
+  LeaveService.withRepository(this._repository) : _authService = AuthService();
 
   Future<Map<String, dynamic>> applyLeave({
     required String type,
@@ -21,36 +23,39 @@ class LeaveService {
     String? proofFilePath,
   }) async {
     try {
-      // region - validation
-
-      // Validate leave type
-      if (!['paid', 'sick'].contains(type)) {
+      if (!await _authService.isAuthenticated()) {
         return {
           'success': false,
-          'message': 'Tipe cuti tidak valid. Pilih "paid" atau "sick"',
+          'message': 'Please login to apply for leave',
+          'requiresLogin': true,
         };
       }
 
-      // Validate dates
+      if (!['paid', 'sick'].contains(type)) {
+        return {
+          'success': false,
+          'message': 'Invalid leave type. Choose "paid" or "sick"',
+        };
+      }
+
       if (startDate.isBefore(DateTime.now().subtract(Duration(days: 1)))) {
         return {
           'success': false,
-          'message': 'Tanggal mulai tidak boleh kurang dari hari ini',
+          'message': 'Start date cannot be before today',
         };
       }
 
       if (endDate.isBefore(startDate)) {
         return {
           'success': false,
-          'message': 'Tanggal selesai tidak boleh kurang dari tanggal mulai',
+          'message': 'End date cannot be before start date',
         };
       }
 
-      // Validate reason
       if (reason.trim().isEmpty || reason.length > 255) {
         return {
           'success': false,
-          'message': 'Alasan cuti harus diisi dan maksimal 255 karakter',
+          'message': 'Reason is required and must be less than 255 characters',
         };
       }
 
@@ -64,20 +69,30 @@ class LeaveService {
 
       return {
         'success': true,
-        'message': 'Pengajuan cuti berhasil dikirim',
+        'message': 'Leave application submitted successfully',
         'leave': leave.toJson(),
       };
     } catch (e) {
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+
       return {
         'success': false,
-        'message': e.toString().replaceFirst('Exception: ', ''),
+        'message': errorMessage,
+        'requiresLogin': _authService.isAuthError(errorMessage),
       };
     }
   }
-  // endregion
 
   Future<Map<String, dynamic>> getMyLeaves() async {
     try {
+      if (!await _authService.isAuthenticated()) {
+        return {
+          'success': false,
+          'message': 'Please login to view leaves',
+          'requiresLogin': true,
+        };
+      }
+
       final leaves = await _repository.getMyLeaves();
 
       return {
@@ -86,9 +101,12 @@ class LeaveService {
         'total': leaves.length,
       };
     } catch (e) {
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+
       return {
         'success': false,
-        'message': e.toString().replaceFirst('Exception: ', ''),
+        'message': errorMessage,
+        'requiresLogin': _authService.isAuthError(errorMessage),
       };
     }
   }

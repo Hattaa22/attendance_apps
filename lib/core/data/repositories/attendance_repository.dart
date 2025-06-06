@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../models/attendance_model.dart';
 
 abstract class AttendanceRepository {
@@ -19,8 +20,9 @@ abstract class AttendanceRepository {
 
 class AttendanceRepositoryImpl implements AttendanceRepository {
   final Dio _dio;
+  final AuthService _authService;
 
-  AttendanceRepositoryImpl() : _dio = ApiService().dio;
+  AttendanceRepositoryImpl() : _dio = ApiService().dio, _authService = AuthService();
 
   @override
   Future<AttendanceModel> clockIn({
@@ -28,6 +30,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     required double longitude,
     required DateTime waktu,
   }) async {
+    await _authService.requireAuthentication();
+
     try {
       final response = await _dio.post('/attendance/clock-in', data: {
         'latitude': latitude,
@@ -38,7 +42,16 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       final attendance = AttendanceModel.fromJson(response.data['attendance']);
       return attendance;
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Clock-in gagal');
+      if (e.response?.statusCode == 401) {
+        await _authService.handle401();
+      }
+
+      throw Exception(e.response?.data['message'] ?? 'Clock-in failed');
+    } catch (e) {
+      if (e.toString().contains('User not authenticated')) {
+        rethrow;
+      }
+      throw Exception('Clock-in failed: $e');
     }
   }
 
@@ -48,6 +61,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     required double longitude,
     required DateTime waktu,
   }) async {
+    await _authService.requireAuthentication();
+
     try {
       final response = await _dio.post('/attendance/clock-out', data: {
         'latitude': latitude,
@@ -58,7 +73,16 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       final attendance = AttendanceModel.fromJson(response.data['attendance']);
       return attendance;
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Clock-out gagal');
+      if (e.response?.statusCode == 401) {
+        await _authService.handle401();
+      }
+
+      throw Exception(e.response?.data['message'] ?? 'Clock-out failed');
+    } catch (e) {
+      if (e.toString().contains('User not authenticated')) {
+        rethrow;
+      }
+      throw Exception('Clock-out failed: $e');
     }
   }
 }

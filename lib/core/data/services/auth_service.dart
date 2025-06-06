@@ -1,5 +1,6 @@
 import '../repositories/auth_repository.dart';
 import 'token_storage.dart';
+import 'user_storage.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -11,7 +12,6 @@ class AuthService {
     _repository = AuthRepositoryImpl();
   }
 
-  // For testing
   AuthService.withRepository(this._repository);
 
   Future<Map<String, dynamic>> login(String nip, String password) async {
@@ -106,8 +106,44 @@ class AuthService {
     }
   }
 
-  Future<bool> isLoggedIn() async {
-    final token = await TokenStorage.getToken();
-    return token != null && token.isNotEmpty;
+  Future<bool> isAuthenticated() async {
+    try {
+      final token = await TokenStorage.getToken();
+      return token != null && token.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
+
+  Future<void> clearAuthData() async {
+    try {
+      await TokenStorage.clearToken();
+      await UserStorage.clearUser();
+    } catch (e) {
+      print('Error clearing auth data: $e');
+    }
+  }
+
+  Future<void> requireAuthentication([String? customMessage]) async {
+    if (!await isAuthenticated()) {
+      throw Exception(
+          customMessage ?? 'User not authenticated - please login first');
+    }
+  }
+
+  Future<void> handle401() async {
+    await clearAuthData();
+    throw Exception('Session expired - please login again');
+  }
+
+  bool isAuthError(String errorMessage) {
+    return errorMessage.contains('not authenticated') ||
+        errorMessage.contains('Session expired') ||
+        errorMessage.contains('Unauthorized');
+  }
+
+  // Legacy method
+  // Future<bool> isLoggedIn() async {
+  //   return await isAuthenticated();
+  // }
 }

@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
     await _testTokenOperations();
 
     // Logout flow tests (disable if you want to keep the session)
-    await _testLogoutFlow();
+    // await _testLogoutFlow();
 
     print('=== All tests completed ===');
   }
@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
 
     // Test 1: Check if logged in (should be false initially)
     print('1. Testing isLoggedIn() - Initial state:');
-    bool isLoggedIn = await authService.isLoggedIn();
+    bool isLoggedIn = await authService.isAuthenticated();
     print(
         '   Result: ${isLoggedIn ? "❌ Already logged in" : "✅ Not logged in"}');
     await _delay();
@@ -85,7 +85,7 @@ class MyApp extends StatelessWidget {
 
     // Test 4: Check if logged in after login
     print('4. Testing isLoggedIn() after login:');
-    bool isLoggedIn = await authService.isLoggedIn();
+    bool isLoggedIn = await authService.isAuthenticated();
     print(
         '   Result: ${isLoggedIn ? "✅ Successfully logged in" : "❌ Not logged in"}');
     await _delay();
@@ -163,7 +163,7 @@ class MyApp extends StatelessWidget {
 
     // Test 10: Check if logged in after logout
     print('10. Testing isLoggedIn() after logout:');
-    bool isLoggedIn = await authService.isLoggedIn();
+    bool isLoggedIn = await authService.isAuthenticated();
     print(
         '   Result: ${!isLoggedIn ? "✅ Successfully logged out" : "❌ Still logged in"}');
     await _delay();
