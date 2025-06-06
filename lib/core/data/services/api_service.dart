@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'token_storage.dart';
+import '../storages/token_storage.dart';
 import 'auth_service.dart';
 
 class ApiService {

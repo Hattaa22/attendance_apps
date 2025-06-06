@@ -1,6 +1,6 @@
 import '../repositories/auth_repository.dart';
-import 'token_storage.dart';
-import 'user_storage.dart';
+import '../storages/token_storage.dart';
+import '../storages/user_storage.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
