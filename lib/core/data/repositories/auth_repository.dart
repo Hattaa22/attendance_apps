@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import '../services/api_service.dart';
-import '../services/token_storage.dart';
-import '../services/user_storage.dart';
+import '../storages/token_storage.dart';
+import '../storages/user_storage.dart';
 import '../models/auth_model.dart';
 
 abstract class AuthRepository {
@@ -28,7 +28,6 @@ class AuthRepositoryImpl implements AuthRepository {
       final loginResponse = LoginResponse.fromJson(response.data);
 
       await TokenStorage.saveToken(loginResponse.accessToken);
-
       await UserStorage.saveUser(loginResponse.user.toJson());
 
       return loginResponse;
@@ -90,7 +89,6 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     print('DEBUG: Falling back to cached data');
-    // Fall back to cached data
     final cachedUserData = await UserStorage.getUser();
     if (cachedUserData != null) {
       print('DEBUG: Returning cached user data');
@@ -104,14 +102,39 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<String> refreshToken() async {
     try {
-      final response = await _dio.post('/auth/refresh');
+      final refreshDio = Dio(BaseOptions(
+        baseUrl: _dio.options.baseUrl,
+        connectTimeout: _dio.options.connectTimeout,
+        receiveTimeout: _dio.options.receiveTimeout,
+        headers: {
+          'Accept': 'application/json',
+        },
+      ));
+
+      final currentToken = await TokenStorage.getToken();
+      if (currentToken == null || currentToken.isEmpty) {
+        throw Exception('No token available to refresh');
+      }
+
+      final response = await refreshDio.post(
+        '/auth/refresh',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $currentToken',
+          },
+        ),
+      );
+
       final newToken = response.data['access_token'];
+      if (newToken == null) {
+        throw Exception('No access_token in response');
+      }
 
       await TokenStorage.saveToken(newToken);
       return newToken;
     } on DioException catch (e) {
       await _clearAuthData();
-      throw Exception('Token refresh failed');
+      throw Exception('Token refresh failed: ${e.response?.statusCode}');
     }
   }
 
@@ -121,6 +144,10 @@ class AuthRepositoryImpl implements AuthRepository {
       await _dio.post('/auth/logout');
     } on DioException catch (e) {
       print('Logout API error: ${e.message}');
+      if (e.response?.statusCode == 401) {
+        // If the user is already logged out, we can ignore this error
+        return;
+      }
     }
 
     await _clearAuthData();
