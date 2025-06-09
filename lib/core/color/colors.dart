@@ -12,3 +12,7 @@ const Color greyMainColor = Color.fromRGBO(244, 244, 244, 1);
 const Color redMainColor = Color.fromRGBO(255, 0, 0, 1);
 const Color yellowMainColor = Color.fromRGBO(255, 191, 43, 1);
 const Color purpleMainColor = Color.fromRGBO(200, 0, 255, 1);
+const Color whiteWithOpacity = Color.fromRGBO(255, 255, 255, 0.15);
+const Color pureBlack = Color.fromRGBO(0, 0, 0, 1);
+const Color greyText = Color.fromRGBO(139, 139, 139, 1);
+const Color whiteHome = Color.fromRGBO(244, 244, 244, 1);

@@ -7,9 +7,9 @@ class EditProfilePhotoScreen extends StatefulWidget {
   final String initialProfileImage;
 
   const EditProfilePhotoScreen({
-    Key? key,
+    super.key,
     required this.initialProfileImage,
-  }) : super(key: key);
+  });
 
   @override
   State<EditProfilePhotoScreen> createState() => _EditProfilePhotoScreenState();

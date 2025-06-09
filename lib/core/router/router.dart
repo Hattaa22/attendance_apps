@@ -4,6 +4,9 @@ import 'package:fortis_apps/view/calendar/view/add_meeting.dart';
 import 'package:fortis_apps/view/calendar/view/calendar.dart';
 import 'package:fortis_apps/view/home/view/home.dart';
 import 'package:fortis_apps/view/splash_screen/splash_screen.dart';
+import 'package:fortis_apps/view/home/view/notification.dart';
+import 'package:fortis_apps/view/home/view/reminder.dart';
+import 'package:fortis_apps/view/home/view/checkin_details.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(
@@ -44,5 +47,20 @@ final GoRouter router = GoRouter(
       path: '/addMeeting',
       builder: (context, state) => const AddMeetingPage(),
     ),
+    GoRoute(
+    name: 'notification',
+    path: '/notification',
+    builder: (context, state) => const NotificationPage(),
+  ),
+  GoRoute(
+    name: 'reminder',
+    path: '/reminder',
+    builder: (context, state) => const ReminderPage(),
+  ),
+  GoRoute(
+    name: 'checkinDetails',
+    path: '/checkinDetails',
+    builder: (context, state) => const CheckInDetailsPage(),
+  ),
   ]
 );
