@@ -359,20 +359,15 @@ class _AddLeavePageState extends State<AddLeavePage> {
     );
   }
 
-  // Handle Set Leave button press
+  // Handle Set Leave button press - MODIFIED to use CustomSuccessDialog
   void _handleSetLeave() {
     if (_isFormValid()) {
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Leave request submitted successfully!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      
-      // Optional: Navigate back or to another screen
-      // Navigator.pop(context);
+      // Instead of showing dialog here, we return to previous page with success data
+      Navigator.pop(context, {
+        'success': true,
+        'message': 'Leave has been set successfully',
+        'details': 'The department and team member will receive an email containing details of the requested leave along with information on the approved leave period.'
+      });
       
       // Optional: Reset form after successful submission
       // _resetForm();
@@ -562,9 +557,9 @@ class _AddLeavePageState extends State<AddLeavePage> {
   }) {
     String dateText = 'Select';
     if (startDate != null && endDate != null) {
-      dateText = '${_formatDate(startDate)} - ${_formatDate(endDate)}';
+      dateText = '${_formatDateWithDayName(startDate)} - ${_formatDateWithDayName(endDate)}';
     } else if (startDate != null) {
-      dateText = _formatDate(startDate);
+      dateText = _formatDateWithDayName(startDate);
     }
 
     return Column(
@@ -592,12 +587,14 @@ class _AddLeavePageState extends State<AddLeavePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  dateText,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: (startDate != null) 
-                        ? colorScheme.onSurface 
-                        : colorScheme.onSurface.withOpacity(0.4),
+                Expanded(
+                  child: Text(
+                    dateText,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: (startDate != null) 
+                          ? colorScheme.onSurface 
+                          : colorScheme.onSurface.withOpacity(0.4),
+                    ),
                   ),
                 ),
                 Icon(
@@ -611,6 +608,23 @@ class _AddLeavePageState extends State<AddLeavePage> {
         ),
       ],
     );
+  }
+
+  // Enhanced date formatting method with day name
+  String _formatDateWithDayName(DateTime date) {
+    const List<String> dayNames = [
+      'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
+    ];
+    
+    const List<String> monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    
+    String dayName = dayNames[date.weekday - 1];
+    String monthName = monthNames[date.month - 1];
+    
+    return '$dayName, ${date.day.toString().padLeft(2, '0')} $monthName ${date.year}';
   }
 
   String _formatDate(DateTime date) {
@@ -730,6 +744,107 @@ class _AddLeavePageState extends State<AddLeavePage> {
     );
   }
 }
+
+// CustomSuccessDialog - Add your custom dialog class here
+class CustomSuccessDialog extends StatelessWidget {
+  final String title;
+  final String message;
+  final VoidCallback? onOkayPressed;
+  
+  const CustomSuccessDialog({
+    super.key,
+    required this.title,
+    required this.message,
+    this.onOkayPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Check icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(
+                color: Color(0xFF10B981), // Green color
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Title
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            
+            // Message
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF666666),
+                fontWeight: FontWeight.w400,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // OK Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  if (onOkayPressed != null) {
+                    onOkayPressed!();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2463EB), // Blue color
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Okay',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 // Custom Date Range Picker Dialog remains the same
 class CustomDateRangePickerDialog extends StatefulWidget {

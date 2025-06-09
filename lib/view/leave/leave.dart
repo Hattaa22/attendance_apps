@@ -84,16 +84,38 @@ class _LeavePageState extends State<LeavePage> {
       ),
     );
     
-    // If a new leave application was added, refresh the data
-    if (result != null && result == true) {
-      // You can refresh the leave data here if needed
-      // For example, if AddLeavePage returns the new leave data:
-      // _initializeLeaveData(); // or fetch from API
-      // _updateFilteredApplications();
+    // Check if result contains success data
+    if (result != null && result is Map<String, dynamic> && result['success'] == true) {
+      // Show success dialog on Leave page
+      _showSuccessDialog(
+        title: 'Leave has been set',
+        message: result['details'] ?? 'Leave application submitted successfully',
+      );
+      
+      // Refresh the leave data
       setState(() {
-        // Refresh the UI
+        // You can add new leave data here or refresh from API
+        _initializeLeaveData();
+        _updateFilteredApplications();
       });
     }
+  }
+
+  void _showSuccessDialog({required String title, required String message}) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return CustomSuccessDialog(
+          title: title,
+          message: message,
+          onOkayPressed: () {
+            // Dialog will be dismissed automatically
+            // You can add any additional actions here
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -120,7 +142,7 @@ class _LeavePageState extends State<LeavePage> {
         leadingWidth: 100,
         actions: [
           IconButton(
-            onPressed: _navigateToAddLeave, // Modified: Added navigation function
+            onPressed: _navigateToAddLeave,
             icon: Container(
               width: 32,
               height: 32,
@@ -243,7 +265,7 @@ class _LeavePageState extends State<LeavePage> {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected 
-                              ? const Color(0xFF4285F4).withOpacity(0.2) // Blue color like in image
+                              ? const Color(0xFF4285F4).withOpacity(0.2)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(25),
                           border: Border.all(
@@ -297,7 +319,7 @@ class _LeavePageState extends State<LeavePage> {
         unselectedItemColor: colorScheme.onSurface.withOpacity(0.6),
         backgroundColor: colorScheme.surface,
         elevation: 8,
-        currentIndex: 4, // Leave tab is selected
+        currentIndex: 4,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
@@ -324,7 +346,7 @@ class _LeavePageState extends State<LeavePage> {
     );
   }
 
-Widget _buildStatCard(
+  Widget _buildStatCard(
     String title,
     String value,
     Color indicatorColor,
@@ -333,7 +355,7 @@ Widget _buildStatCard(
   ) {
     return Expanded(
       child: AspectRatio(
-        aspectRatio: 1.0, // Square aspect ratio for consistent sizing
+        aspectRatio: 1.0,
         child: Container(
           decoration: BoxDecoration(
             color: indicatorColor.withOpacity(0.08),
@@ -341,7 +363,6 @@ Widget _buildStatCard(
           ),
           child: Column(
             children: [
-              // Top indicator line (full width, touching top)
               Container(
                 width: double.infinity,
                 height: 4,
@@ -353,13 +374,11 @@ Widget _buildStatCard(
                   ),
                 ),
               ),
-              // Content with padding
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Stack(
                     children: [
-                      // Title at top-left
                       Positioned(
                         top: 0,
                         left: 0,
@@ -374,7 +393,6 @@ Widget _buildStatCard(
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      // Value at bottom-right
                       Positioned(
                         bottom: 0,
                         right: 0,
@@ -476,7 +494,6 @@ Widget _buildStatCard(
             ],
           ),
           const SizedBox(height: 10),
-          // Garis horizontal tipis sebagai pemisah
           Divider(
             height: 2,
             thickness: 2,
@@ -573,4 +590,104 @@ class LeaveApplication {
     required this.approvedBy,
     required this.status,
   });
+}
+
+// CustomSuccessDialog - Move this to Leave page or create a shared widget
+class CustomSuccessDialog extends StatelessWidget {
+  final String title;
+  final String message;
+  final VoidCallback? onOkayPressed;
+  
+  const CustomSuccessDialog({
+    super.key,
+    required this.title,
+    required this.message,
+    this.onOkayPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Check icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(
+                color: Color(0xFF10B981),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Title
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            
+            // Message
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF666666),
+                fontWeight: FontWeight.w400,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // OK Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  if (onOkayPressed != null) {
+                    onOkayPressed!();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2463EB),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Okay',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
