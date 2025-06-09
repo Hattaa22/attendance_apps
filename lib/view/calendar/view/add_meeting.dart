@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
-import 'package:multiselect/multiselect.dart';
 import 'package:flutter_time_picker_spinner/flutter_time_picker_spinner.dart';
 import 'package:fortis_apps/widget_global/show_dialog_success/dialog_success.dart';
-import 'package:calendar_date_picker2/calendar_date_picker2.dart';
+import '../../../widget_global/custom_button/custom_button.dart';
+import '../../../widget_global/dropdown_form_field/dropdown_form_field.dart';
+import '../../../widget_global/form_field_one/form_field_one.dart';
+import '../widget/multi_select.dart';
+import '../widget/custom_calendar.dart';
+import '../model/event_data.dart';
 
 class AddMeetingPage extends StatefulWidget {
   const AddMeetingPage({super.key});
@@ -32,91 +36,79 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
   }
 
   void _onFormChanged() {
-    setState(() {
-      
-    });
+    setState(() {});
   }
 
   bool _isFormValid() {
-  // Base validation for required fields
-  bool baseValidation = _titleController.text.isNotEmpty &&
-      _selectedType != null &&
-      _selectedDepartment != null &&
-      _selectedHeadDepartment != null &&
-      _selectedTeamDepartment != null &&
-      _selectedTeamMembers.length == 3 &&
-      _selectedDate != null &&
-      _startTime != null &&
-      _endTime != null;
+    bool baseValidation = _titleController.text.isNotEmpty &&
+        _selectedType != null &&
+        _selectedDepartment != null &&
+        _selectedHeadDepartment != null &&
+        _selectedTeamDepartment != null &&
+        _selectedTeamMembers.length == 3 &&
+        _selectedDate != null &&
+        _startTime != null &&
+        _endTime != null;
 
-  if (_selectedType == 'Online') {
-    return baseValidation && _descriptionController.text.isNotEmpty;
+    if (_selectedType == 'Online') {
+      return baseValidation && _descriptionController.text.isNotEmpty;
+    }
+
+    return baseValidation;
   }
-
-  return baseValidation;
-}
 
   void _setMeeting(BuildContext context, String type) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => CustomSuccessDialog(
-        title: type == 'Online' ? 'Online Meeting has been set!' : 'Offline Meeting has been set!',
-        message: type == 'Online' ? 'Departement team member will receive an email containing the meeting details and a link to join the online session.' : 'You will receive a notification as a reminder of the meeting’s time and physical location.',
+        title: type == 'Online'
+            ? 'Online Meeting has been set!'
+            : 'Offline Meeting has been set!',
+        message: type == 'Online'
+            ? 'Departement team member will receive an email containing the meeting details and a link to join the online session.'
+            : 'You will receive a notification as a reminder of the meeting’s time and physical location.',
       ),
     );
   }
 
   void _setDate(BuildContext context) {
-  DateTime? tempSelectedDate = _selectedDate;
+    DateTime? tempSelectedDate = _selectedDate;
+    DateTime tempFocusedDate = _selectedDate ?? DateTime.now();
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setDialogState) => Dialog(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CalendarDatePicker2(
-                  config: CalendarDatePicker2Config(
-                  calendarType: CalendarDatePicker2Type.single,
-                  selectedDayHighlightColor: blueMainColor,
-                  weekdayLabelTextStyle: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.bold,
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            backgroundColor: Colors.white,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.9,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CustomCalendar(
+                    selectedDay: tempSelectedDate ?? DateTime.now(),
+                    focusedDay: tempFocusedDate,
+                    onDaySelected: (selectedDay, focusedDay) {
+                      setDialogState(() {
+                        tempSelectedDate = selectedDay;
+                        tempFocusedDate = focusedDay;
+                      });
+                    },
+                    eventLoader: (day) {
+                      return EventData.getEvents()[
+                              DateTime.utc(day.year, day.month, day.day)] ??
+                          [];
+                    },
+                    onEventSelected: (_) {},
                   ),
-                  controlsTextStyle: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  dayTextStyle: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.black,
-                    fontWeight: FontWeight.normal,
-                  ),
-                  selectedDayTextStyle: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  firstDate: DateTime(DateTime.now().year, 1, 1),
-                  lastDate: DateTime(DateTime.now().year, 12, 31),
-                  ),
-                  value: tempSelectedDate != null ? [tempSelectedDate] : [],
-                  onValueChanged: (dates) {
-                    // Update the temporary date and rebuild dialog
-                    setDialogState(() {
-                      tempSelectedDate = dates.first;
-                    });
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
+                  const SizedBox(height: 16),
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
@@ -139,45 +131,31 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: blueMainColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
+                      CustomButton(
+                        text: 'Apply',
+                        borderRadius: 4,
+                        width: 80,
+                        height: 36,
+                        fontSize: 14,
+                        onPressed: () {
+                          if (tempSelectedDate != null) {
+                            setState(() {
+                              _selectedDate = tempSelectedDate;
+                            });
+                            Navigator.pop(context);
+                          }
+                        },
                       ),
-                      onPressed: () {
-                        if (tempSelectedDate != null) {
-                          setState(() {
-                            _selectedDate = tempSelectedDate;
-                          });
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: const Text(
-                        'Apply',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   void _setTime(BuildContext context) {
     TimeOfDay? tempStartTime = _startTime;
@@ -316,18 +294,12 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: blueMainColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 6,
-                    ),
-                  ),
+                CustomButton(
+                  text: 'Apply',
+                  borderRadius: 4,
+                  width: 80,
+                  height: 36,
+                  fontSize: 12,
                   onPressed: () {
                     if (tempStartTime != null && tempEndTime != null) {
                       // Validate time range
@@ -353,13 +325,6 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                       Navigator.pop(context);
                     }
                   },
-                  child: const Text(
-                    'Apply',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -398,38 +363,11 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Meeting Title
-              const Text(
-                'Meeting Title',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _titleController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  hoverColor: Colors.white,
-                  focusColor: Colors.white,
+              FormFieldOne(
+                  controller: _titleController,
+                  labelText: 'Meeting Title',
                   hintText: 'Enter your meeting title',
-                  hintStyle: TextStyle(color: Color.fromRGBO(165, 165, 165, 1)),
-                  errorStyle: TextStyle(color: Colors.red),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
-              ),
+                  onChanged: (value) => _onFormChanged()),
 
               const SizedBox(height: 16),
 
@@ -439,40 +377,15 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                hint: const Text('Select'),
+              CustomDropdownFormField(
+                hint: 'Select',
                 value: _selectedType,
-                items: <String>['Online', 'Offline'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
+                items: ['Online', 'Offline'],
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedType = newValue;
                   });
                 },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  hoverColor: Colors.white,
-                  focusColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
               ),
 
               const SizedBox(height: 16),
@@ -482,41 +395,15 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                hint: const Text('Select'),
+              CustomDropdownFormField(
+                hint: 'Select',
                 value: _selectedDepartment,
-                items: <String>['IT', 'HRD', 'Marketing', 'Finance']
-                    .map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
+                items: ['IT', 'HRD', 'Marketing', 'Finance'],
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedDepartment = newValue;
                   });
                 },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  hoverColor: Colors.white,
-                  focusColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
               ),
 
               const SizedBox(height: 16),
@@ -526,40 +413,15 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                hint: const Text('Select'),
+              CustomDropdownFormField(
+                hint: 'Select',
                 value: _selectedHeadDepartment,
-                items: <String>['Head Department'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
+                items: ['Head Department'],
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedHeadDepartment = newValue;
                   });
                 },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  hoverColor: Colors.white,
-                  focusColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
               ),
 
               const SizedBox(height: 16),
@@ -569,110 +431,36 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                hint: const Text('Select'),
+              CustomDropdownFormField(
+                hint: 'Select',
                 value: _selectedTeamDepartment,
-                items: <String>['Team Adit', 'Team Denis'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
+                items: ['Team Adit', 'Team Denis'],
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedTeamDepartment = newValue;
                   });
                 },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  hoverColor: Colors.white,
-                  focusColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
               ),
 
               const SizedBox(height: 16),
 
-              // Check Again !!!
               const Text(
                 'Department Team Member',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              DropDownMultiSelect(
-                onChanged: (List<String> x) {
-                  setState(() {
-                    if (x.length <= 3) {
-                      _selectedTeamMembers = x;
-                    } else {
-                      // Show snackbar when trying to select more than 3 members
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content:
-                              Text('You can only select up to 3 team members'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    }
-                  });
-                },
+              CustomMultiSelect(
                 options: const [
-                  'Adit',
-                  'Denis',
-                  'Budi',
-                  'Joko',
-                  'Joni',
-                  'Jono',
-                  'Jone'
+                  'Adit', 'Denis', 'Budi', 'Joko', 'Joni', 'Jono', 'Jone'
                 ],
                 selectedValues: _selectedTeamMembers,
-                whenEmpty: 'Select team members (max 3)',
-                childBuilder: (selectedValues) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                    child: Text(
-                      selectedValues.isEmpty
-                          ? 'Select team members (max 3)'
-                          : selectedValues.join(', '),
-                      style: TextStyle(
-                        color: selectedValues.isEmpty
-                            ? Colors.grey[400]
-                            : Colors.black,
-                      ),
-                    ),
-                  );
+                onChanged: (values) {
+                  setState(() {
+                    _selectedTeamMembers = values;
+                  });
                 },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: greyMainColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                  ),
-                ),
+                whenEmpty: 'Select team members (max 3)',
+                maxSelection: 3,
               ),
 
               const SizedBox(height: 16),
@@ -762,68 +550,25 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
               // Description (only show if Online is selected, at the bottom)
               if (_selectedType == 'Online') ...[
                 const SizedBox(height: 16),
-                const Text(
-                  'Description',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 8),
-                TextField(
+                FormFieldOne(
                   controller: _descriptionController,
+                  labelText: 'Description',
+                  hintText: 'Add a link or description',
                   maxLines: 3,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    hoverColor: Colors.white,
-                    focusColor: Colors.white,
-                    hintText: 'Add a link or description',
-                    hintStyle:
-                        TextStyle(color: Color.fromRGBO(165, 165, 165, 1)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: greyMainColor),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: greyMainColor),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                  ),
+                  onChanged: (value) => _onFormChanged(),
                 ),
               ],
               const SizedBox(height: 22),
-              ElevatedButton(
+              CustomButton(
+                text: 'Set Meeting',
+                isEnabled: _isFormValid(),
                 onPressed: _isFormValid()
                     ? () {
                         Navigator.of(context).pop();
                         _setMeeting(context, _selectedType ?? '');
                       }
                     : null,
-                style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                  backgroundColor:
-                      _isFormValid() ? blueMainColor : Colors.grey[300],
-                  foregroundColor:
-                      _isFormValid() ? Colors.white : Colors.grey[500],
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Set Meeting',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+              )
             ],
           ),
         ),

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:fortis_apps/widget_global/show_dialog_success/dialog_success.dart';
 
+import '../../../../widget_global/custom_button/custom_button.dart';
+import '../../../../widget_global/form_field_one/form_field_one.dart';
+
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key});
 
@@ -11,7 +14,6 @@ class ResetPasswordPage extends StatefulWidget {
 
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final TextEditingController _emailController = TextEditingController();
-  bool _isFormFilled = false;
   String? _emailError;
   final RegExp _emailRegex = RegExp(r'^[a-zA-Z0-9.@]+$');
 
@@ -23,7 +25,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
   void _updateFormState() {
     setState(() {
-      _isFormFilled = _emailController.text.isNotEmpty;
     });
   }
 
@@ -36,7 +37,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   bool _isValidEmail(String email) {
     if (!_emailRegex.hasMatch(email) || !email.contains("@")){
       setState(() {
-        _emailError = 'Email tidak valid';
+        _emailError = 'Invalid Email';
       });
       return false;
     }
@@ -116,77 +117,23 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Email field
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Email',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Colors.white,
-                              hoverColor: Colors.white,
-                              focusColor: Colors.white,
-                              hintText: 'Enter your email',
-                              hintStyle: TextStyle(
-                                  color: Color.fromRGBO(165, 165, 165, 1)),
-                                                            errorText: _emailError,
-                              errorStyle: TextStyle(color: Colors.red),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: greyMainColor),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: greyMainColor),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFE0E0E0)),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
-                            ),
-                          ),
-                        ],
+                      FormFieldOne(
+                        controller: _emailController,
+                        labelText: 'Email',
+                        hintText: 'Enter your email',
+                        errorText: _emailError ?? '',
+                        onChanged: (_) => _updateFormState(),
                       ),
                       const SizedBox(height: 24),
                       // Send button
-                      ElevatedButton(
-                        onPressed: _isFormFilled
-                            ? () {
-                                if(_isValidEmail(_emailController.text)) {
-                                  _sendToEmail(context, _emailController.text);
-                                }
-                              }
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _isFormFilled
-                              ? blueMainColor
-                              : const Color.fromRGBO(223, 223, 223, 1),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          'Kirim',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                      CustomButton(
+                        text: 'Send',
+                        isEnabled: _emailController.text.isNotEmpty,
+                        onPressed: () {
+                          if (_isValidEmail(_emailController.text)) {
+                             _sendToEmail(context, _emailController.text);
+                          }
+                        },
                       ),
                     ],
                   ),
