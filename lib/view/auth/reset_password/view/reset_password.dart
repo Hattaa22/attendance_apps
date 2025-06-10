@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:fortis_apps/widget_global/show_dialog_success/dialog_success.dart';
-import 'package:go_router/go_router.dart';
+// import 'package:go_router/go_router.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key});
@@ -66,7 +66,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            context.go('/login');
+            Navigator.pop(context);
           },
         ),
       ),
