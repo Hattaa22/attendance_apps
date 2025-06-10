@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
+import 'package:fortis_apps/widget_global/custom_button/custom_button.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fortis_apps/widget_global/password_field/password_field.dart';
+import 'package:fortis_apps/widget_global/form_field_one/form_field_one.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,8 +15,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _obscureText = true;
-  bool _isFormFilled = false;
   String? _emailError;
   final RegExp _emailRegex = RegExp(r'^[a-zA-Z0-9.@]+$');
 
@@ -25,16 +26,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _updateFormState() {
-    setState(() {
-      _isFormFilled = _emailController.text.isNotEmpty &&
-          _passwordController.text.isNotEmpty;
-    });
+    setState(() {});
   }
 
   bool _isValidEmail(String email) {
-    if (!_emailRegex.hasMatch(email) || !email.contains("@")){
+    if (!_emailRegex.hasMatch(email) || !email.contains("@")) {
       setState(() {
-        _emailError = 'Email tidak valid';
+        _emailError = 'Invalid Email';
       });
       return false;
     }
@@ -135,105 +133,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Email field
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Email',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Colors.white,
-                              hoverColor: Colors.white,
-                              focusColor: Colors.white,
-                              hintText: 'Enter your email',
-                              hintStyle: TextStyle(
-                                  color: Color.fromRGBO(165, 165, 165, 1)),
-                              errorText: _emailError,
-                              errorStyle: TextStyle(color: Colors.red),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: greyMainColor),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: greyMainColor),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFE0E0E0)),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
-                            ),
-                          ),
-                        ],
+                      FormFieldOne(
+                        controller: _emailController,
+                        labelText: 'Email',
+                        hintText: 'Enter your email',
+                        errorText: _emailError ?? '',
+                        onChanged: (_) => _updateFormState(),
                       ),
                       const SizedBox(height: 14),
                       // Password field
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Password',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _passwordController,
-                            obscureText: _obscureText,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Colors.white,
-                              focusColor: Colors.white,
-                              hoverColor: Colors.white,
-                              hintText: 'Enter your password',
-                              hintStyle: TextStyle(
-                                  color: Color.fromRGBO(165, 165, 165, 1)),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: greyMainColor),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: greyMainColor),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: Color(0xFFE0E0E0)),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  size: 24,
-                                  _obscureText
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                  color: Colors.grey,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscureText = !_obscureText;
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
+                      CustomPasswordField(
+                        controller: _passwordController,
+                        labelText: 'Password',
+                        hintText: 'Enter your password',
+                        onChanged: (_) => _updateFormState(),
                       ),
                       const SizedBox(height: 6),
                       // Forgot password
@@ -241,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            context.go('/resetPassword');
+                            context.push('/resetPassword');
                           },
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
@@ -259,32 +172,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24),
                       // Login button
-                      ElevatedButton(
-                        onPressed: _isFormFilled
-                            ? () {
-                                if (_isValidEmail(_emailController.text)) {
-                                  context.go('/home');
-                                }
-                              }
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _isFormFilled
-                              ? blueMainColor
-                              : const Color.fromRGBO(223, 223, 223, 1),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          'Login',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                      CustomButton(
+                        text: 'Login',
+                        isEnabled: _emailController.text.isNotEmpty &&
+                            _passwordController.text.isNotEmpty,
+                        onPressed: () {
+                          if (_isValidEmail(_emailController.text)) {
+                            context.go('/home');
+                          }
+                        },
                       ),
                     ],
                   ),
