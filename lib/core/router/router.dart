@@ -29,6 +29,11 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const ResetPasswordPage(),
     ),
     GoRoute(
+      name: '/changePassword',
+      path: '/changePassword',
+      builder: (context, state) => const ChangePassword(),
+    ),
+    GoRoute(
       name: '/home',
       path: '/home',
       builder: (context, state) => const Home(),
