@@ -45,7 +45,7 @@ class Navigation extends StatelessWidget {
             AssetImage('assets/icon/User_cicrle_light.png'),
             size: 30,
           ),
-          label: 'Leave',
+          label: 'Profile',
         ),
       ],
       backgroundColor: Colors.white,
