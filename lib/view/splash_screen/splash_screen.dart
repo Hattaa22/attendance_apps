@@ -1,4 +1,5 @@
-import 'package:attendance_apps/core/color/colors.dart';
+
+import 'package:fortis_apps/core/color/colors.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:go_router/go_router.dart';
@@ -50,4 +51,6 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
     );
   }
+
 }
+
