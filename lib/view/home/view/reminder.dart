@@ -309,7 +309,6 @@ class _ReminderPageState extends State<ReminderPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: allDays.asMap().entries.map((entry) {
-              int index = entry.key;
               String day = entry.value;
               bool isSelected = selectedDays.contains(day);
               

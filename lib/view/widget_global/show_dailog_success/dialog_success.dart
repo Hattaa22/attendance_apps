@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:attendance_apps/core/color/colors.dart';
+import '../../../core/color/colors.dart';
 
 class CustomSuccessDialog extends StatelessWidget {
   final String title;

@@ -1,8 +1,5 @@
-import 'package:attendance_apps/view/leave/leave.dart';
 import 'package:flutter/material.dart';
-
-
-// import 'core/router/router.dart';
+import 'core/router/router.dart';
 
 
 void main() {
