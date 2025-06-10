@@ -1,3 +1,4 @@
+
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -50,4 +51,6 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
     );
   }
+
 }
+
