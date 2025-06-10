@@ -91,7 +91,7 @@ class CustomSuccessDialog extends StatelessWidget {
                   ),
                 ),
                 child: const Text(
-                  'Oke',
+                  'Okay',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
