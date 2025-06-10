@@ -311,38 +311,6 @@ class _LeavePageState extends State<LeavePage> {
           ),
         ],
       ),
-
-      // Bottom Navigation Bar
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: colorScheme.primary,
-        unselectedItemColor: colorScheme.onSurface.withOpacity(0.6),
-        backgroundColor: colorScheme.surface,
-        elevation: 8,
-        currentIndex: 4,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined),
-            label: 'Attendance',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today_outlined),
-            label: 'Calendar',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.savings_outlined),
-            label: 'Salary',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.beach_access),
-            label: 'Leave',
-          ),
-        ],
-      ),
     );
   }
 
