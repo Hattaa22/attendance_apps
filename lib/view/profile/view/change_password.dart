@@ -121,7 +121,7 @@ class _ChangePasswordState extends State<ChangePassword> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            context.go('/resetPassword');
+                            context.push('/resetPassword');
                           },
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
