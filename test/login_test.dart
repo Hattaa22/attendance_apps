@@ -65,9 +65,9 @@ class MyApp extends StatelessWidget {
 
     // Test 3: Login with valid credentials
     print('3. Testing login() with credentials:');
-    print('   Attempting login with identifier: "10003"');
+    print('   Attempting login with identifier: "69"');
 
-    final loginResult = await authService.login('admin@example.com', 'password');
+    final loginResult = await authService.login('daffamaulanasatria@gmail.com', 'password123');
 
     print('   Login result: ${loginResult}'); // Add this debug line
 
