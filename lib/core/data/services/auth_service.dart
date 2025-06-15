@@ -14,9 +14,9 @@ class AuthService {
 
   AuthService.withRepository(this._repository);
 
-  Future<Map<String, dynamic>> login(String nip, String password) async {
+  Future<Map<String, dynamic>> login(String identifier, String password) async {
     try {
-      final loginResponse = await _repository.login(nip, password);
+      final loginResponse = await _repository.login(identifier, password);
 
       return {
         'success': true,
@@ -24,6 +24,7 @@ class AuthService {
         'data': loginResponse.toJson(),
         'user': loginResponse.user.toJson(),
         'token': loginResponse.accessToken,
+        'expires_in': loginResponse.expiresIn,
       };
     } catch (e) {
       return {
@@ -42,9 +43,12 @@ class AuthService {
         'user': user.toJson(),
       };
     } catch (e) {
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+
       return {
         'success': false,
-        'message': e.toString().replaceFirst('Exception: ', ''),
+        'message': errorMessage,
+        'requiresLogin': isAuthError(errorMessage),
       };
     }
   }
@@ -58,9 +62,22 @@ class AuthService {
         'user': user.toJson(),
       };
     } catch (e) {
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+
+      if (errorMessage.contains('Session expired') ||
+          errorMessage.contains('token is invalid')) {
+        return {
+          'success': false,
+          'message': errorMessage,
+          'requiresLogin': true,
+          'sessionExpired': true,
+        };
+      }
+
       return {
         'success': false,
-        'message': e.toString().replaceFirst('Exception: ', ''),
+        'message': errorMessage,
+        'requiresLogin': isAuthError(errorMessage),
       };
     }
   }
@@ -74,9 +91,12 @@ class AuthService {
         'user': user.toJson(),
       };
     } catch (e) {
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+
       return {
         'success': false,
-        'message': e.toString().replaceFirst('Exception: ', ''),
+        'message': errorMessage,
+        'requiresLogin': isAuthError(errorMessage),
       };
     }
   }
@@ -115,6 +135,47 @@ class AuthService {
     }
   }
 
+  Future<bool> isValidSession() async {
+    if (!await isAuthenticated()) {
+      return false;
+    }
+
+    return await _repository.validateToken();
+  }
+
+  Future<Map<String, dynamic>> checkSession() async {
+    try {
+      if (!await isAuthenticated()) {
+        return {
+          'valid': false,
+          'message': 'No authentication token found',
+          'requiresLogin': true,
+        };
+      }
+
+      final isValid = await _repository.validateToken();
+
+      if (!isValid) {
+        return {
+          'valid': false,
+          'message': 'Session has expired',
+          'requiresLogin': true,
+          'sessionExpired': true,
+        };
+      }
+
+      return {
+        'valid': true,
+        'message': 'Session is valid',
+      };
+    } catch (e) {
+      return {
+        'valid': false,
+        'message': 'Failed to validate session: ${e.toString()}',
+      };
+    }
+  }
+
   Future<void> clearAuthData() async {
     try {
       await TokenStorage.clearToken();
@@ -139,11 +200,7 @@ class AuthService {
   bool isAuthError(String errorMessage) {
     return errorMessage.contains('not authenticated') ||
         errorMessage.contains('Session expired') ||
-        errorMessage.contains('Unauthorized');
+        errorMessage.contains('Unauthorized') ||
+        errorMessage.contains('token is invalid');
   }
-
-  // Legacy method
-  // Future<bool> isLoggedIn() async {
-  //   return await isAuthenticated();
-  // }
 }

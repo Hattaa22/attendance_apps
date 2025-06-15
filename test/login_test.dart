@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fortis_apps/core/data/services/auth_service.dart';
+import 'package:fortis_apps/core/data/storages/token_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,15 +65,29 @@ class MyApp extends StatelessWidget {
 
     // Test 3: Login with valid credentials
     print('3. Testing login() with credentials:');
-    final loginResult = await authService.login('10003', 'password');
+    print('   Attempting login with identifier: "10003"');
+
+    final loginResult = await authService.login('admin@example.com', 'password');
+
+    print('   Login result: ${loginResult}'); // Add this debug line
 
     if (loginResult['success']) {
       print('   ✅ Login successful');
       print('   Message: ${loginResult['message']}');
+      print('   Token exists: ${loginResult['token'] != null}');
       print(
-          '   Token: ${loginResult['token'] != null ? "Token received" : "No token"}');
+          '   Token value: ${loginResult['token']?.substring(0, 20) ?? "null"}...');
       print('   User: ${loginResult['user']['name'] ?? "No user name"}');
       print('   NIP: ${loginResult['user']['nip'] ?? "No NIP"}');
+      print('   Email: ${loginResult['user']['email'] ?? "No email"}');
+
+      // Debug: Check if token was actually saved
+      print('   Checking if token was saved...');
+      final savedToken = await TokenStorage.getToken();
+      print('   Saved token exists: ${savedToken != null}');
+      if (savedToken != null) {
+        print('   Saved token: ${savedToken.substring(0, 20)}...');
+      }
     } else {
       print('   ❌ Login failed: ${loginResult['message']}');
     }

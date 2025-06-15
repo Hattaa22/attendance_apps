@@ -34,6 +34,12 @@ class UserModel {
       'team_department_id': teamDepartmentId,
     };
   }
+
+  // Helper methods
+  String get displayName => name;
+  String get displayInfo => '$name ($nip)';
+  bool get hasRole => roleId != null;
+  bool get hasTeamDepartment => teamDepartmentId != null;
 }
 
 class LoginResponse {
@@ -52,22 +58,18 @@ class LoginResponse {
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
-  print('DEBUG: Starting LoginResponse parsing...');
-  print('DEBUG: access_token type: ${json['access_token'].runtimeType}');
-  print('DEBUG: expires_in: ${json['expires_in']} (${json['expires_in'].runtimeType})');
-  print('DEBUG: user data: ${json['user']}');
-  
-  final user = UserModel.fromJson(json['user']);
-  print('DEBUG: User parsed successfully');
-  
-  return LoginResponse(
-    accessToken: json['access_token'],
-    refreshToken: json['refresh_token'],
-    user: user,
-    tokenType: json['token_type'] ?? 'Bearer',
-    expiresIn: json['expires_in'],
-  );
-}
+    final user = UserModel.fromJson(json['user']);
+    
+    return LoginResponse(
+      accessToken: json['access_token'].toString(),
+      refreshToken: json['refresh_token']?.toString(),
+      user: user,
+      tokenType: json['token_type']?.toString() ?? 'bearer',
+      expiresIn: json['expires_in'] is int 
+          ? json['expires_in'] 
+          : int.tryParse(json['expires_in'].toString()),
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -77,5 +79,27 @@ class LoginResponse {
       'token_type': tokenType,
       'expires_in': expiresIn,
     };
+  }
+
+  bool get hasRefreshToken => refreshToken != null && refreshToken!.isNotEmpty;
+  bool get hasExpiryTime => expiresIn != null;
+  
+  DateTime? get expiryDateTime {
+    if (expiresIn == null) return null;
+    return DateTime.now().add(Duration(seconds: expiresIn!));
+  }
+
+  bool get isExpired {
+    final expiry = expiryDateTime;
+    if (expiry == null) return false;
+    return DateTime.now().isAfter(expiry);
+  }
+
+  Duration? get timeUntilExpiry {
+    final expiry = expiryDateTime;
+    if (expiry == null) return null;
+    final now = DateTime.now();
+    if (now.isAfter(expiry)) return Duration.zero;
+    return expiry.difference(now);
   }
 }

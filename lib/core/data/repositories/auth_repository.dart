@@ -5,11 +5,12 @@ import '../storages/user_storage.dart';
 import '../models/auth_model.dart';
 
 abstract class AuthRepository {
-  Future<LoginResponse> login(String nip, String password);
+  Future<LoginResponse> login(String identifier, String password);
   Future<UserModel> getCurrentUser();
   Future<UserModel> refreshUser();
   Future<String> refreshToken();
   Future<void> logout();
+  Future<bool> validateToken();
 }
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -18,10 +19,10 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl() : _dio = ApiService().dio;
 
   @override
-  Future<LoginResponse> login(String nip, String password) async {
+  Future<LoginResponse> login(String identifier, String password) async {
     try {
       final response = await _dio.post('/auth/login', data: {
-        'nip': nip,
+        'identifier': identifier,
         'password': password,
       }).timeout(Duration(seconds: 15));
 
@@ -34,9 +35,23 @@ class AuthRepositoryImpl implements AuthRepository {
     } on DioException catch (e) {
       String errorMessage = 'Login failed';
 
-      if (e.response?.data is Map) {
-        errorMessage = e.response?.data['message'] ??
-            e.response?.data['error'] ??
+      if (e.response?.statusCode == 422 && e.response?.data != null) {
+        final errors = e.response?.data;
+        if (errors is Map && errors.containsKey('identifier')) {
+          final identifierErrors = errors['identifier'];
+          errorMessage = identifierErrors is List
+              ? identifierErrors.first
+              : identifierErrors;
+        } else if (errors is Map && errors.containsKey('password')) {
+          final passwordErrors = errors['password'];
+          errorMessage =
+              passwordErrors is List ? passwordErrors.first : passwordErrors;
+        }
+      } else if (e.response?.statusCode == 401) {
+        errorMessage = 'Invalid email/NIP or password';
+      } else if (e.response?.data is Map) {
+        errorMessage = e.response?.data['error'] ??
+            e.response?.data['message'] ??
             'Invalid credentials';
       }
 
@@ -72,31 +87,55 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserModel> refreshUser() async {
     print('DEBUG: refreshUser() called');
 
-    try {
-      if (await _isAuthenticated()) {
-        print('DEBUG: User authenticated, calling getCurrentUser...');
-
-        return await getCurrentUser().timeout(
-          Duration(seconds: 8),
-          onTimeout: () {
-            print('DEBUG: getCurrentUser() timed out, falling back to cache');
-            throw Exception('API timeout');
-          },
-        );
+    if (!await _isAuthenticated()) {
+      print('DEBUG: No token found, checking cache');
+      final cachedUserData = await UserStorage.getUser();
+      if (cachedUserData != null) {
+        print('DEBUG: Returning cached user data (no token)');
+        return UserModel.fromJson(cachedUserData);
       }
+      throw Exception('No user data available');
+    }
+
+    try {
+      print('DEBUG: Token found, validating with server...');
+
+      return await getCurrentUser().timeout(
+        Duration(seconds: 8),
+        onTimeout: () {
+          print('DEBUG: API timeout - this is a network issue, not auth issue');
+          throw Exception('API timeout');
+        },
+      );
+    } on DioException catch (e) {
+      print('DEBUG: DioException in refreshUser: ${e.response?.statusCode}');
+
+      if (e.response?.statusCode == 401) {
+        print('DEBUG: 401 detected - clearing auth data');
+        await _clearAuthData();
+        throw Exception('Session expired - token is invalid');
+      }
+
+      print('DEBUG: Non-auth error (${e.response?.statusCode}), trying cache');
+      rethrow;
     } catch (e) {
-      print('DEBUG: Failed to refresh from API: $e');
-    }
+      print('DEBUG: Non-Dio error in refreshUser: $e');
 
-    print('DEBUG: Falling back to cached data');
-    final cachedUserData = await UserStorage.getUser();
-    if (cachedUserData != null) {
-      print('DEBUG: Returning cached user data');
-      return UserModel.fromJson(cachedUserData);
-    }
+      if (e.toString().contains('API timeout') ||
+          e.toString().contains('Connection')) {
+        print('DEBUG: Network/timeout error, falling back to cache');
 
-    print('DEBUG: No user data available');
-    throw Exception('No user data available');
+        final cachedUserData = await UserStorage.getUser();
+        if (cachedUserData != null) {
+          print('DEBUG: Returning cached user data (network error)');
+          return UserModel.fromJson(cachedUserData);
+        }
+
+        throw Exception('Network error and no cached data available');
+      }
+
+      rethrow;
+    }
   }
 
   @override
@@ -139,13 +178,35 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<bool> validateToken() async {
+    try {
+      final token = await TokenStorage.getToken();
+      if (token == null || token.isEmpty) {
+        return false;
+      }
+
+      await _dio.get('/auth/me');
+      return true;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        await _clearAuthData();
+        return false;
+      }
+      print('Token validation error: ${e.message}');
+      return false;
+    } catch (e) {
+      print('Unexpected error during token validation: $e');
+      return false;
+    }
+  }
+
+  @override
   Future<void> logout() async {
     try {
       await _dio.post('/auth/logout');
     } on DioException catch (e) {
       print('Logout API error: ${e.message}');
       if (e.response?.statusCode == 401) {
-        // If the user is already logged out, we can ignore this error
         return;
       }
     }
