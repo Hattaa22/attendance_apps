@@ -1,243 +1,465 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:fortis_apps/core/data/services/auth_service.dart';
+import 'package:fortis_apps/core/data/repositories/auth_repository.dart'; // Changed import
 import 'package:fortis_apps/core/data/storages/token_storage.dart';
+import 'package:fortis_apps/core/data/storages/user_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
 
-  runApp(MyApp());
+  runApp(LoginTest());
 }
 
-class MyApp extends StatelessWidget {
-  MyApp({super.key});
-  final AuthService authService = AuthService();
+class LoginTest extends StatelessWidget {
+  LoginTest({super.key});
 
-  Future<void> testAllMethods() async {
-    print('=== Testing AuthService ===\n');
+  final AuthRepository authRepository =
+      AuthRepositoryImpl(); // Changed from AuthService to AuthRepository
+
+  Future<void> testCompleteAuthFlow() async {
+    print('=== Testing Complete Auth Repository Flow ===\n'); // Updated message
+
+    // Phase 1: Initial state and validation
+    await _testInitialState();
     await _delay();
 
-    // Initial state tests
-    await _testInitialState();
+    // Phase 2: Input validation tests
+    await _testInputValidation();
+    await _delay();
 
-    // Login flow tests
+    // Phase 3: Login flow with real credentials
     await _testLoginFlow();
+    await _delay();
 
-    // Post-login state tests
-    await _testPostLoginState();
+    // Phase 4: Post-login operations
+    await _testPostLoginOperations();
+    await _delay();
 
-    // Token and user operations
+    // Phase 5: Session management
+    await _testSessionManagement();
+    await _delay();
+
+    // Phase 6: Token operations
     await _testTokenOperations();
+    await _delay();
 
-    // Logout flow tests (disable if you want to keep the session)
+    // Phase 7: User data operations
+    await _testUserDataOperations();
+    await _delay();
+
+    // Phase 8: Error handling scenarios
+    // await _testErrorHandling();
+    // await _delay();
+
+    // Phase 9: Logout flow (optional - uncomment to test)
     // await _testLogoutFlow();
 
-    print('=== All tests completed ===');
+    print(
+        '\n🎉 === All Auth Repository tests completed ==='); // Updated message
   }
 
   Future<void> _testInitialState() async {
-    print('📋 INITIAL STATE TESTS');
-    print('─' * 30);
+    print('🔍 PHASE 1: INITIAL STATE TESTS');
+    print('═' * 40);
 
-    // Test 1: Check if logged in (should be false initially)
-    print('1. Testing isLoggedIn() - Initial state:');
-    bool isLoggedIn = await authService.isAuthenticated();
+    // Test authentication status
+    print('1.1 Testing initial authentication state:');
+    bool isAuthenticated = await authRepository.isAuthenticated(); // Changed
     print(
-        '   Result: ${isLoggedIn ? "❌ Already logged in" : "✅ Not logged in"}');
-    await _delay();
+        '   Is authenticated: ${isAuthenticated ? "❌ Already logged in" : "✅ Not authenticated"}');
 
-    // Test 2: Get user (should fail initially)
-    print('2. Testing getUser() - Initial state:');
-    var userResult = await authService.getUser();
+    // Test session validity
+    print('1.2 Testing initial session validity:');
+    bool isValidSession = await authRepository.isValidSession(); // Changed
+    print(
+        '   Session valid: ${isValidSession ? "❌ Session exists" : "✅ No valid session"}');
+
+    // Test user data availability
+    print('1.3 Testing initial user data:');
+    var userResult = await authRepository.getUser(); // Changed
     if (userResult['success']) {
       print('   ❌ User data exists: ${userResult['user']['name']}');
+      print('   From cache: ${userResult['fromCache'] ?? false}');
     } else {
       print('   ✅ No user data as expected');
       print('   Message: ${userResult['message']}');
+      print('   Requires login: ${userResult['requiresLogin'] ?? false}');
     }
-    await _delay();
+
+    // Test session check
+    print('1.4 Testing session check:');
+    var sessionResult = await authRepository.checkSession(); // Changed
+    print(
+        '   Session valid: ${sessionResult['valid'] ? "❌" : "✅"} ${sessionResult['message']}');
+    print('   Requires login: ${sessionResult['requiresLogin'] ?? false}');
+  }
+
+  Future<void> _testInputValidation() async {
+    print('\n📝 PHASE 2: INPUT VALIDATION TESTS');
+    print('═' * 40);
+
+    // Test empty identifier
+    print('2.1 Testing empty identifier:');
+    var result = await authRepository.login('', 'password123'); // Changed
+    _printLoginResult(result, shouldSucceed: false);
+
+    await _shortDelay();
+
+    // Test empty password
+    print('2.2 Testing empty password:');
+    result = await authRepository.login('test@example.com', ''); // Changed
+    _printLoginResult(result, shouldSucceed: false);
+
+    await _shortDelay();
+
+    // Test whitespace-only inputs
+    print('2.3 Testing whitespace-only identifier:');
+    result = await authRepository.login('   ', 'password123'); // Changed
+    _printLoginResult(result, shouldSucceed: false);
+
+    await _shortDelay();
+
+    // Test both empty
+    print('2.4 Testing both fields empty:');
+    result = await authRepository.login('', ''); // Changed
+    _printLoginResult(result, shouldSucceed: false);
   }
 
   Future<void> _testLoginFlow() async {
-    print('\n🔐 LOGIN FLOW TESTS');
-    print('─' * 30);
+    print('\n🔐 PHASE 3: LOGIN FLOW TESTS');
+    print('═' * 40);
 
-    // Test 3: Login with valid credentials
-    print('3. Testing login() with credentials:');
-    print('   Attempting login with identifier: "69"');
+    // Test with invalid credentials first
+    print('3.1 Testing login with invalid credentials:');
+    var invalidResult = await authRepository.login(
+        'invalid@test.com', 'wrongpassword'); // Changed
+    _printLoginResult(invalidResult, shouldSucceed: false);
 
-    final loginResult = await authService.login('daffamaulanasatria@gmail.com', 'password123');
+    await _shortDelay();
 
-    print('   Login result: ${loginResult}'); // Add this debug line
+    // Test with email identifier
+    print('3.2 Testing login with email identifier:');
+    var emailResult =
+        await authRepository.login('10003', 'password'); // Changed
+    bool emailLoginSuccess =
+        _printLoginResult(emailResult, shouldSucceed: true);
 
-    if (loginResult['success']) {
-      print('   ✅ Login successful');
-      print('   Message: ${loginResult['message']}');
-      print('   Token exists: ${loginResult['token'] != null}');
-      print(
-          '   Token value: ${loginResult['token']?.substring(0, 20) ?? "null"}...');
-      print('   User: ${loginResult['user']['name'] ?? "No user name"}');
-      print('   NIP: ${loginResult['user']['nip'] ?? "No NIP"}');
-      print('   Email: ${loginResult['user']['email'] ?? "No email"}');
+    await _shortDelay();
 
-      // Debug: Check if token was actually saved
-      print('   Checking if token was saved...');
-      final savedToken = await TokenStorage.getToken();
-      print('   Saved token exists: ${savedToken != null}');
-      if (savedToken != null) {
-        print('   Saved token: ${savedToken.substring(0, 20)}...');
-      }
-    } else {
-      print('   ❌ Login failed: ${loginResult['message']}');
+    // If email login failed, try with NIP
+    if (!emailLoginSuccess) {
+      print('3.3 Testing login with NIP identifier:');
+      var nipResult =
+          await authRepository.login('69', 'password123'); // Changed
+      _printLoginResult(nipResult, shouldSucceed: true);
     }
-    await _delay();
+
+    // Verify token storage after successful login
+    await _verifyTokenStorage();
   }
 
-  Future<void> _testPostLoginState() async {
-    print('\n📊 POST-LOGIN STATE TESTS');
-    print('─' * 30);
+  Future<void> _testPostLoginOperations() async {
+    print('\n📊 PHASE 4: POST-LOGIN OPERATIONS');
+    print('═' * 40);
 
-    // Test 4: Check if logged in after login
-    print('4. Testing isLoggedIn() after login:');
-    bool isLoggedIn = await authService.isAuthenticated();
+    // Test authentication status after login
+    print('4.1 Testing authentication status after login:');
+    bool isAuthenticated = await authRepository.isAuthenticated(); // Changed
     print(
-        '   Result: ${isLoggedIn ? "✅ Successfully logged in" : "❌ Not logged in"}');
-    await _delay();
+        '   Is authenticated: ${isAuthenticated ? "✅ Successfully authenticated" : "❌ Not authenticated"}');
 
-    // Test 5: Get stored user
-    print('5. Testing getUser() after login:');
-    var userResult = await authService.getUser();
+    // Test session validity after login
+    print('4.2 Testing session validity after login:');
+    bool isValidSession = await authRepository.isValidSession(); // Changed
+    print(
+        '   Session valid: ${isValidSession ? "✅ Valid session" : "❌ Invalid session"}');
 
-    if (userResult['success']) {
-      print('   ✅ User data retrieved');
-      print('   NIP: ${userResult['user']['nip'] ?? "N/A"}');
-      print('   Name: ${userResult['user']['name'] ?? "N/A"}');
-      print('   Email: ${userResult['user']['email'] ?? "N/A"}');
-      print('   Department: ${userResult['user']['department'] ?? "N/A"}');
-    } else {
-      print('   ❌ Failed to get user: ${userResult['message']}');
+    // Test session check after login
+    print('4.3 Testing detailed session check:');
+    var sessionResult = await authRepository.checkSession(); // Changed
+    print(
+        '   Session status: ${sessionResult['valid'] ? "✅ Valid" : "❌ Invalid"}');
+    print('   Message: ${sessionResult['message']}');
+    if (sessionResult['sessionExpired'] == true) {
+      print('   ⚠️  Session expired detected');
     }
-    await _delay();
+    if (sessionResult['networkError'] == true) {
+      print('   ⚠️  Network error detected');
+    }
+  }
+
+  Future<void> _testSessionManagement() async {
+    print('\n🔄 PHASE 5: SESSION MANAGEMENT TESTS');
+    print('═' * 40);
+
+    // Test require authentication (should pass if logged in)
+    print('5.1 Testing require authentication:');
+    try {
+      await authRepository.requireAuthentication(); // Changed
+      print('   ✅ Authentication requirement passed');
+    } catch (e) {
+      print('   ❌ Authentication requirement failed: $e');
+    }
+
+    // Test require authentication with custom message
+    print('5.2 Testing require authentication with custom message:');
+    try {
+      await authRepository
+          .requireAuthentication('Custom auth message for testing'); // Changed
+      print('   ✅ Custom authentication requirement passed');
+    } catch (e) {
+      print('   ❌ Custom authentication requirement failed: $e');
+    }
+
+    // Test auth error detection
+    print('5.3 Testing auth error detection:');
+    List<String> testMessages = [
+      'not authenticated',
+      'Session expired',
+      'Unauthorized access',
+      'token is invalid',
+      'regular error message'
+    ];
+
+    for (String message in testMessages) {
+      bool isAuthError = authRepository.isAuthError(message); // Changed
+      String expected = message.contains('regular')
+          ? '❌ Not auth error'
+          : '✅ Auth error detected';
+      print(
+          '   "$message": ${isAuthError ? "✅ Auth error" : "❌ Not auth error"} $expected');
+    }
   }
 
   Future<void> _testTokenOperations() async {
-    print('\n🔄 TOKEN & USER OPERATIONS');
-    print('─' * 30);
+    print('\n🎫 PHASE 6: TOKEN OPERATIONS');
+    print('═' * 40);
 
-    // Test 6: Get current user from API
-    print('6. Testing getCurrentUser() from API:');
-    var currentUserResult = await authService.getCurrentUser();
+    // Test token refresh
+    print('6.1 Testing token refresh:');
+    bool refreshSuccess = await authRepository.refreshToken(); // Changed
+    print('   Token refresh: ${refreshSuccess ? "✅ Success" : "❌ Failed"}');
 
-    if (currentUserResult['success']) {
-      print('   ✅ Current user loaded from API');
-      print('   Name: ${currentUserResult['user']['name'] ?? "N/A"}');
-      print('   Email: ${currentUserResult['user']['email'] ?? "N/A"}');
-    } else {
-      print(
-          '   ❌ Failed to load current user: ${currentUserResult['message']}');
+    if (refreshSuccess) {
+      await _verifyTokenStorage();
     }
-    await _delay();
 
-    // Test 7: Load user (with fallback to cache)
-    print('7. Testing loadUser():');
-    var loadUserResult = await authService.loadUser();
+    await _shortDelay();
 
-    if (loadUserResult['success']) {
-      print('   ✅ User loaded successfully');
-      print(
-          '   Source: ${loadUserResult['user']['name'] != null ? "API or Cache" : "Unknown"}');
-    } else {
-      print('   ❌ Failed to load user: ${loadUserResult['message']}');
-    }
-    await _delay();
-
-    // Test 8: Refresh token
-    print('8. Testing refreshToken():');
-    bool refreshSuccess = await authService.refreshToken();
+    // Test authentication after token refresh
+    print('6.2 Testing authentication after token refresh:');
+    bool isAuthenticated = await authRepository.isAuthenticated(); // Changed
     print(
-        '   Result: ${refreshSuccess ? "✅ Token refreshed successfully" : "❌ Token refresh failed"}');
-    await _delay();
+        '   Is authenticated: ${isAuthenticated ? "✅ Still authenticated" : "❌ Lost authentication"}');
+  }
+
+  Future<void> _testUserDataOperations() async {
+    print('\n👤 PHASE 7: USER DATA OPERATIONS');
+    print('═' * 40);
+
+    // Test get user (with cache fallback)
+    print('7.1 Testing getUser() with cache fallback:');
+    var userResult = await authRepository.getUser(); // Changed
+    _printUserResult(userResult, 'getUser');
+
+    await _shortDelay();
+
+    // Test get current user (fresh from API)
+    print('7.2 Testing getCurrentUser() from API:');
+    var currentUserResult = await authRepository.getCurrentUser(); // Changed
+    _printUserResult(currentUserResult, 'getCurrentUser');
+
+    await _shortDelay();
+
+    // Test load user (optimized for app startup)
+    print('7.3 Testing loadUser() for app startup:');
+    var loadUserResult = await authRepository.loadUser(); // Changed
+    _printUserResult(loadUserResult, 'loadUser');
+  }
+
+  Future<void> _testErrorHandling() async {
+    print('\n⚠️  PHASE 8: ERROR HANDLING TESTS');
+    print('═' * 40);
+
+    // Test 401 handling (simulate by calling handle401)
+    print('8.1 Testing 401 error handling:');
+    try {
+      await authRepository.handle401(); // Changed
+      print('   ❌ handle401() should have thrown an exception');
+    } catch (e) {
+      print('   ✅ handle401() correctly threw exception: $e');
+
+      // Verify auth data was cleared
+      bool stillAuthenticated =
+          await authRepository.isAuthenticated(); // Changed
+      print('   Auth data cleared: ${!stillAuthenticated ? "✅ Yes" : "❌ No"}');
+    }
+
+    await _shortDelay();
+
+    // Test authentication status after 401 handling
+    print('8.2 Testing authentication status after 401:');
+    bool isAuthenticated = await authRepository.isAuthenticated(); // Changed
+    print(
+        '   Is authenticated: ${isAuthenticated ? "❌ Still authenticated" : "✅ Properly logged out"}');
   }
 
   Future<void> _testLogoutFlow() async {
-    print('\n🚪 LOGOUT FLOW TESTS');
-    print('─' * 30);
+    print('\n🚪 PHASE 9: LOGOUT FLOW TESTS');
+    print('═' * 40);
 
-    // Test 9: Logout
-    print('9. Testing logout():');
-    var logoutResult = await authService.logout();
+    // Test logout
+    print('9.1 Testing logout:');
+    var logoutResult = await authRepository.logout(); // Changed
 
     if (logoutResult['success']) {
       print('   ✅ Logout successful');
       print('   Message: ${logoutResult['message']}');
+      if (logoutResult['warning'] != null) {
+        print('   ⚠️  Warning: ${logoutResult['warning']}');
+      }
     } else {
       print('   ❌ Logout failed: ${logoutResult['message']}');
     }
-    await _delay();
 
-    // Test 10: Check if logged in after logout
-    print('10. Testing isLoggedIn() after logout:');
-    bool isLoggedIn = await authService.isAuthenticated();
+    await _shortDelay();
+
+    // Test authentication status after logout
+    print('9.2 Testing authentication status after logout:');
+    bool isAuthenticated = await authRepository.isAuthenticated(); // Changed
     print(
-        '   Result: ${!isLoggedIn ? "✅ Successfully logged out" : "❌ Still logged in"}');
-    await _delay();
+        '   Is authenticated: ${!isAuthenticated ? "✅ Successfully logged out" : "❌ Still authenticated"}');
 
-    // Test 11: Verify user data cleared
-    print('11. Testing getUser() after logout:');
-    var userResult = await authService.getUser();
+    // Test session validity after logout
+    print('9.3 Testing session validity after logout:');
+    bool isValidSession = await authRepository.isValidSession(); // Changed
+    print(
+        '   Session valid: ${!isValidSession ? "✅ Session invalidated" : "❌ Session still valid"}');
 
+    // Test user data after logout
+    print('9.4 Testing user data after logout:');
+    var userResult = await authRepository.getUser(); // Changed
     if (userResult['success']) {
       print('   ❌ User data still exists: ${userResult['user']['name']}');
     } else {
-      print('   ✅ User data cleared as expected');
+      print('   ✅ User data cleared');
       print('   Message: ${userResult['message']}');
+      print('   Requires login: ${userResult['requiresLogin'] ?? false}');
     }
-    await _delay();
+
+    // Test storage clearing
+    await _verifyStorageCleared();
+  }
+
+  // Helper methods
+  bool _printLoginResult(Map<String, dynamic> result,
+      {required bool shouldSucceed}) {
+    String status = result['success'] == shouldSucceed ? '✅' : '❌';
+    print(
+        '   $status ${result['success'] ? 'Success' : 'Failed'}: ${result['message']}');
+
+    if (result['success']) {
+      print('   User: ${result['user']?['name'] ?? 'No name'}');
+      print('   Email: ${result['user']?['email'] ?? 'No email'}');
+      print('   NIP: ${result['user']?['nip'] ?? 'No NIP'}');
+      print('   Token length: ${result['token']?.length ?? 0}');
+      print('   Expires in: ${result['expires_in'] ?? 'Not specified'}');
+      return true;
+    } else {
+      print('   Error type: ${result['type'] ?? 'Unknown'}');
+      return false;
+    }
+  }
+
+  void _printUserResult(Map<String, dynamic> result, String method) {
+    if (result['success']) {
+      print('   ✅ $method successful');
+      print('   Name: ${result['user']?['name'] ?? 'N/A'}');
+      print('   Email: ${result['user']?['email'] ?? 'N/A'}');
+      print('   NIP: ${result['user']?['nip'] ?? 'N/A'}');
+      print('   Department: ${result['user']?['department'] ?? 'N/A'}');
+
+      if (result['fromCache'] == true) {
+        print('   📋 Source: Cache');
+      }
+      if (result['sessionExpired'] == true) {
+        print('   ⚠️  Session expired detected');
+      }
+    } else {
+      print('   ❌ $method failed: ${result['message']}');
+      print('   Requires login: ${result['requiresLogin'] ?? false}');
+    }
+  }
+
+  Future<void> _verifyTokenStorage() async {
+    print('   🔍 Verifying token storage...');
+    final savedToken = await TokenStorage.getToken();
+    print('   Token saved: ${savedToken != null ? "✅ Yes" : "❌ No"}');
+    if (savedToken != null && savedToken.length > 20) {
+      print('   Token preview: ${savedToken.substring(0, 20)}...');
+    }
+  }
+
+  Future<void> _verifyStorageCleared() async {
+    print('9.5 Verifying storage cleared:');
+
+    final token = await TokenStorage.getToken();
+    final userData = await UserStorage.getUser();
+
+    print('   Token cleared: ${token == null ? "✅ Yes" : "❌ No"}');
+    print('   User data cleared: ${userData == null ? "✅ Yes" : "❌ No"}');
   }
 
   Future<void> _delay() async {
-    await Future.delayed(Duration(milliseconds: 800));
+    await Future.delayed(Duration(seconds: 2));
+  }
+
+  Future<void> _shortDelay() async {
+    await Future.delayed(Duration(milliseconds: 500));
   }
 
   @override
   Widget build(BuildContext context) {
-    testAllMethods();
+    testCompleteAuthFlow();
 
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text("AuthService Test"),
-          backgroundColor: Colors.blue,
+          title: const Text("Complete Auth Repository Test"), // Updated title
+          backgroundColor: Colors.green,
           foregroundColor: Colors.white,
         ),
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.security, size: 64, color: Colors.blue),
+              Icon(Icons.security_outlined, size: 64, color: Colors.green),
               SizedBox(height: 16),
               Text(
-                "Testing AuthService Methods",
+                "Testing Complete Auth Repository Flow", // Updated text
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
               Text(
-                "Check terminal for detailed results",
+                "Check terminal for detailed test results",
                 style: TextStyle(color: Colors.grey),
               ),
               SizedBox(height: 16),
               Text(
-                "Tests include:",
+                "Test Phases:",
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               SizedBox(height: 8),
-              Text("• Initial state validation"),
-              Text("• Login flow"),
-              Text("• Post-login state"),
-              Text("• Token operations"),
-              Text("• User data retrieval"),
-              Text("• Logout flow"),
+              Text("🔍 Phase 1: Initial State"),
+              Text("📝 Phase 2: Input Validation"),
+              Text("🔐 Phase 3: Login Flow"),
+              Text("📊 Phase 4: Post-Login Operations"),
+              Text("🔄 Phase 5: Session Management"),
+              Text("🎫 Phase 6: Token Operations"),
+              Text("👤 Phase 7: User Data Operations"),
+              Text("⚠️  Phase 8: Error Handling"),
+              Text("🚪 Phase 9: Logout Flow (Optional)"),
             ],
           ),
         ),

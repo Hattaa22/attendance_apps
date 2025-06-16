@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../storages/token_storage.dart';
-import 'auth_service.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -32,17 +31,7 @@ class ApiService {
         },
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401) {
-            bool refreshed = await AuthService().refreshToken();
-            if (refreshed) {
-              final newToken = await TokenStorage.getToken();
-              e.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-
-              final retryResponse = await dio.fetch(e.requestOptions);
-              return handler.resolve(retryResponse);
-            } 
-            else {
-              await AuthService().logout();
-            }
+            print('🔑 401 Unauthorized detected on ${e.requestOptions.path}');
           }
 
           return handler.next(e);

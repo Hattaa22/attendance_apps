@@ -1,132 +1,222 @@
-import '../repositories/profile_repository.dart';
+import 'package:dio/dio.dart';
+import '../services/api_service.dart';
 import '../models/profile_model.dart';
-import 'auth_service.dart';
+
+class ProfileException implements Exception {
+  final String message;
+  ProfileException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class UnauthorizedException implements Exception {
+  final String message;
+  UnauthorizedException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class ValidationException implements Exception {
+  final String message;
+  ValidationException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class NetworkException implements Exception {
+  final String message;
+  NetworkException(this.message);
+
+  @override
+  String toString() => message;
+}
 
 class ProfileService {
   static final ProfileService _instance = ProfileService._internal();
   factory ProfileService() => _instance;
+  ProfileService._internal();
 
-  late ProfileRepository _repository;
-  final AuthService _authService;
+  final Dio _dio = ApiService().dio;
 
-  ProfileService._internal() : _authService = AuthService() {
-    _repository = ProfileRepositoryImpl();
-  }
-
-
-  ProfileService.withRepository(this._repository) : _authService = AuthService();
-
-  Future<Map<String, dynamic>> getProfile() async {
+  Future<ProfileModel> getProfile() async {
     try {
-      if (!await _authService.isAuthenticated()) {
-        return {
-          'success': false,
-          'message': 'Please login to view profile',
-          'requiresLogin': true,
-        };
+      final response =
+          await _dio.get('/profile').timeout(Duration(seconds: 10));
+
+      if (response.data == null) {
+        throw ProfileException('Empty response from server');
       }
 
-      final profile = await _repository.getProfile();
+      return ProfileModel.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw UnauthorizedException(
+            e.response?.data['message'] ?? 'Unauthorized access');
+      } else if (e.response?.statusCode == 404) {
+        throw ProfileException('Profile not found');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('Unable to connect to server');
+      }
 
-      return {
-        'success': true,
-        'profile': profile.toJson(),
-        'message': 'Profile loaded successfully',
-      };
+      throw ProfileException(
+          e.response?.data['message'] ?? 'Failed to get profile data');
     } catch (e) {
-      final errorMessage = e.toString().replaceFirst('Exception: ', '');
-
-      return {
-        'success': false,
-        'message': errorMessage,
-        'requiresLogin': _authService.isAuthError(errorMessage),
-      };
+      if (e is UnauthorizedException || e is NetworkException) {
+        rethrow;
+      }
+      throw ProfileException('Failed to get profile data: $e');
     }
   }
 
-  Future<Map<String, dynamic>> updateProfile({
-    required String name,
-    String? password,
-    String? passwordConfirmation,
-  }) async {
+  Future<ProfileModel> updateProfile(UpdateProfileRequest request) async {
     try {
-      if (!await _authService.isAuthenticated()) {
-        return {
-          'success': false,
-          'message': 'Please login to update profile',
-          'requiresLogin': true,
-        };
+      final response = await _dio
+          .put('/profile', data: request.toJson())
+          .timeout(Duration(seconds: 15));
+
+      if (response.data == null) {
+        throw ProfileException('Empty response from server');
       }
 
-      final request = UpdateProfileRequest(
-        name: name,
-        password: password,
-        passwordConfirmation: passwordConfirmation,
-      );
-
-      if (!request.isValid) {
-        return {
-          'success': false,
-          'message': request.validationError ?? 'Invalid profile data',
-        };
+      if (response.data['user'] == null) {
+        throw ProfileException('Invalid response format: missing user data');
       }
 
-      final updatedProfile = await _repository.updateProfile(request);
+      return ProfileModel.fromJson(response.data['user']);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw UnauthorizedException(
+            e.response?.data['message'] ?? 'Unauthorized access');
+      } else if (e.response?.statusCode == 422) {
+        // Handle validation errors
+        if (e.response?.data != null && e.response?.data is Map) {
+          final errors = e.response?.data as Map<String, dynamic>;
 
-      return {
-        'success': true,
-        'profile': updatedProfile.toJson(),
-        'message': 'Profile updated successfully',
-      };
+          // Check for specific field errors
+          if (errors.containsKey('name')) {
+            final nameErrors = errors['name'];
+            final errorMessage = nameErrors is List && nameErrors.isNotEmpty
+                ? nameErrors.first.toString()
+                : 'Invalid name';
+            throw ValidationException(errorMessage);
+          }
+
+          if (errors.containsKey('password')) {
+            final passwordErrors = errors['password'];
+            final errorMessage =
+                passwordErrors is List && passwordErrors.isNotEmpty
+                    ? passwordErrors.first.toString()
+                    : 'Invalid password';
+            throw ValidationException(errorMessage);
+          }
+
+          if (errors.containsKey('password_confirmation')) {
+            final confirmationErrors = errors['password_confirmation'];
+            final errorMessage =
+                confirmationErrors is List && confirmationErrors.isNotEmpty
+                    ? confirmationErrors.first.toString()
+                    : 'Password confirmation does not match';
+            throw ValidationException(errorMessage);
+          }
+
+          // Generic validation error
+          final firstError = errors.values.firstOrNull;
+          if (firstError != null) {
+            final errorMessage = firstError is List && firstError.isNotEmpty
+                ? firstError.first.toString()
+                : firstError.toString();
+            throw ValidationException(errorMessage);
+          }
+        }
+
+        throw ValidationException(
+            e.response?.data['message'] ?? 'Validation failed');
+      } else if (e.response?.statusCode == 400) {
+        throw ProfileException(e.response?.data['message'] ?? 'Bad request');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('Unable to connect to server');
+      }
+
+      throw ProfileException(
+          e.response?.data['message'] ?? 'Failed to update profile');
     } catch (e) {
-      final errorMessage = e.toString().replaceFirst('Exception: ', '');
-
-      return {
-        'success': false,
-        'message': errorMessage,
-        'requiresLogin': _authService.isAuthError(errorMessage),
-      };
+      if (e is UnauthorizedException ||
+          e is ValidationException ||
+          e is NetworkException) {
+        rethrow;
+      }
+      throw ProfileException('Failed to update profile: $e');
     }
   }
 
-  Future<Map<String, dynamic>> updateName(String name) async {
-    return await updateProfile(name: name);
-  }
-
-  Future<Map<String, dynamic>> updatePassword({
-    required String password,
-    required String passwordConfirmation,
-  }) async {
+  Future<ProfileModel> updateProfilePicture(String imagePath) async {
     try {
-      final profileResult = await getProfile();
-      if (!profileResult['success']) {
-        return profileResult;
+      FormData formData = FormData.fromMap({
+        'profile_picture': await MultipartFile.fromFile(imagePath),
+      });
+
+      final response = await _dio
+          .post('/profile/picture', data: formData)
+          .timeout(Duration(seconds: 30)); // Longer timeout for file upload
+
+      if (response.data == null) {
+        throw ProfileException('Empty response from server');
       }
 
-      final currentName = profileResult['profile']['name'];
+      if (response.data['user'] == null) {
+        throw ProfileException('Invalid response format: missing user data');
+      }
 
-      return await updateProfile(
-        name: currentName,
-        password: password,
-        passwordConfirmation: passwordConfirmation,
-      );
+      return ProfileModel.fromJson(response.data['user']);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw UnauthorizedException(
+            e.response?.data['message'] ?? 'Unauthorized access');
+      } else if (e.response?.statusCode == 422) {
+        // Handle file validation errors
+        if (e.response?.data != null && e.response?.data is Map) {
+          final errors = e.response?.data as Map<String, dynamic>;
+
+          if (errors.containsKey('profile_picture')) {
+            final pictureErrors = errors['profile_picture'];
+            final errorMessage =
+                pictureErrors is List && pictureErrors.isNotEmpty
+                    ? pictureErrors.first.toString()
+                    : 'Invalid profile picture';
+            throw ValidationException(errorMessage);
+          }
+        }
+
+        throw ValidationException(
+            e.response?.data['message'] ?? 'Invalid file format or size');
+      } else if (e.response?.statusCode == 413) {
+        throw ValidationException('File size too large');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw NetworkException('Upload timeout - please check your connection');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('Unable to connect to server');
+      }
+
+      throw ProfileException(
+          e.response?.data['message'] ?? 'Failed to update profile picture');
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to update password: ${e.toString()}',
-      };
+      if (e is UnauthorizedException ||
+          e is ValidationException ||
+          e is NetworkException) {
+        rethrow;
+      }
+      throw ProfileException('Failed to update profile picture: $e');
     }
-  }
-
-  Future<Map<String, dynamic>> updateNameAndPassword({
-    required String name,
-    required String password,
-    required String passwordConfirmation,
-  }) async {
-    return await updateProfile(
-      name: name,
-      password: password,
-      passwordConfirmation: passwordConfirmation,
-    );
   }
 }

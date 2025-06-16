@@ -1,277 +1,276 @@
-import '../repositories/password_reset_repository.dart';
+import 'package:dio/dio.dart';
+import '../services/api_service.dart';
 import '../models/password_reset_model.dart';
+
+class PasswordResetException implements Exception {
+  final String message;
+  PasswordResetException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class ValidationException implements Exception {
+  final String message;
+  ValidationException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class NetworkException implements Exception {
+  final String message;
+  NetworkException(this.message);
+
+  @override
+  String toString() => message;
+}
 
 class PasswordResetService {
   static final PasswordResetService _instance =
       PasswordResetService._internal();
   factory PasswordResetService() => _instance;
+  PasswordResetService._internal();
 
-  late PasswordResetRepository _repository;
+  final Dio _dio = ApiService().dio;
 
-  PasswordResetService._internal() {
-    _repository = PasswordResetRepositoryImpl();
-  }
-
-  PasswordResetService.withRepository(this._repository);
-
-  Future<Map<String, dynamic>> forgotPassword({
-    required String identifier,
-  }) async {
+  Future<ForgotPasswordResponse> forgotPassword(
+      ForgotPasswordRequest request) async {
     try {
-      final request = ForgotPasswordRequest(identifier: identifier);
+      print('DEBUG: About to send forgot password request');
+      print('DEBUG: Request data: ${request.toJson()}');
 
-      if (!request.isValid) {
-        return {
-          'success': false,
-          'message': request.validationError ?? 'Invalid identifier',
-        };
+      final response = await _dio
+          .post('/auth/forgot-password', data: request.toJson())
+          .timeout(Duration(seconds: 15));
+
+      print('DEBUG: Response status: ${response.statusCode}');
+      print('DEBUG: Response data: ${response.data}');
+
+      if (response.data == null) {
+        throw PasswordResetException('Empty response from server');
       }
 
-      final response = await _repository.forgotPassword(request);
+      return ForgotPasswordResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      print('DEBUG: DioException caught');
+      print('DEBUG: Status code: ${e.response?.statusCode}');
+      print('DEBUG: Response data: ${e.response?.data}');
+      print('DEBUG: Request data: ${e.requestOptions.data}');
 
-      return {
-        'success': true,
-        'message': response.message,
-        'reset_token_id': response.resetTokenId,
-      };
-    } catch (e) {
-      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      String errorMessage = 'Failed to send reset request';
 
-      return {
-        'success': false,
-        'message': errorMessage,
-      };
-    }
-  }
-
-  Future<Map<String, dynamic>> verifyOtpToken({
-    required String resetTokenId,
-    required String otpToken,
-  }) async {
-    try {
-      final request = VerifyTokenRequest(
-        resetTokenId: resetTokenId,
-        token: otpToken,
-      );
-
-      if (!request.isValid) {
-        return {
-          'success': false,
-          'message': request.validationError ?? 'Invalid token data',
-        };
+      if (e.response?.statusCode == 404) {
+        throw PasswordResetException('User not found');
+      } else if (e.response?.statusCode == 422 &&
+          e.response?.data['errors'] != null) {
+        final errors = e.response?.data['errors'] as Map<String, dynamic>;
+        if (errors.containsKey('identifier')) {
+          final identifierErrors = errors['identifier'];
+          errorMessage = identifierErrors is List
+              ? identifierErrors.first
+              : identifierErrors;
+        }
+        throw ValidationException(errorMessage);
+      } else if (e.response?.statusCode == 429) {
+        throw PasswordResetException(
+            'Too many requests. Please try again later.');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw NetworkException(
+            'Connection timeout - please check your internet connection');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException(
+            'Unable to connect to server - please check your internet connection');
+      } else if (e.response?.data != null &&
+          e.response?.data['message'] != null) {
+        errorMessage = e.response?.data['message'];
+        throw PasswordResetException(errorMessage);
       }
 
-      final response = await _repository.verifyToken(request);
-
-      return {
-        'success': true,
-        'message': response.message,
-      };
+      throw NetworkException('Network error occurred');
     } catch (e) {
-      final errorMessage = e.toString().replaceFirst('Exception: ', '');
-
-      // Detect specific error types
-      bool isExpired = errorMessage.contains('expired') ||
-          errorMessage.contains('kadaluarsa');
-      bool isInvalid =
-          errorMessage.contains('Invalid') || errorMessage.contains('salah');
-
-      return {
-        'success': false,
-        'message': errorMessage,
-        'is_expired': isExpired,
-        'is_invalid': isInvalid,
-      };
+      if (e is PasswordResetException ||
+          e is ValidationException ||
+          e is NetworkException) {
+        rethrow;
+      }
+      print('DEBUG: Other exception: $e');
+      throw PasswordResetException('Failed to send reset request: $e');
     }
   }
 
-  Future<Map<String, dynamic>> resetPassword({
-    required String resetTokenId,
-    required String password,
-    required String passwordConfirmation,
-  }) async {
+  Future<VerifyTokenResponse> verifyToken(VerifyTokenRequest request) async {
     try {
-      final request = ResetPasswordRequest(
-        resetTokenId: resetTokenId,
-        password: password,
-        passwordConfirmation: passwordConfirmation,
-      );
+      final response = await _dio
+          .post('/auth/verify-token', data: request.toJson())
+          .timeout(Duration(seconds: 15));
 
-      if (!request.isValid) {
-        return {
-          'success': false,
-          'message': request.validationError ?? 'Invalid reset data',
-        };
+      if (response.data == null) {
+        throw PasswordResetException('Empty response from server');
       }
 
-      final response = await _repository.resetPassword(request);
+      return VerifyTokenResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      String errorMessage = 'Token verification failed';
 
-      return {
-        'success': true,
-        'message': response.message,
-      };
-    } catch (e) {
-      final errorMessage = e.toString().replaceFirst('Exception: ', '');
-
-      return {
-        'success': false,
-        'message': errorMessage,
-      };
-    }
-  }
-
-  Future<Map<String, dynamic>> resendOtp({
-    required String resetTokenId,
-  }) async {
-    try {
-      final request = ResendOtpRequest(resetTokenId: resetTokenId);
-
-      if (!request.isValid) {
-        return {
-          'success': false,
-          'message': request.validationError ?? 'Invalid token',
-        };
+      if (e.response?.statusCode == 404) {
+        throw PasswordResetException('Reset token not found');
+      } else if (e.response?.statusCode == 400) {
+        if (e.response?.data['message']?.contains('kadaluarsa')) {
+          throw PasswordResetException('Token has expired');
+        } else if (e.response?.data['message']?.contains('salah')) {
+          throw PasswordResetException('Invalid OTP token');
+        } else {
+          errorMessage = e.response?.data['message'] ?? 'Invalid token';
+          throw PasswordResetException(errorMessage);
+        }
+      } else if (e.response?.statusCode == 422 &&
+          e.response?.data['errors'] != null) {
+        final errors = e.response?.data['errors'] as Map<String, dynamic>;
+        if (errors.containsKey('token')) {
+          final tokenErrors = errors['token'];
+          errorMessage = tokenErrors is List ? tokenErrors.first : tokenErrors;
+        } else if (errors.containsKey('reset_token_id')) {
+          final resetTokenErrors = errors['reset_token_id'];
+          errorMessage = resetTokenErrors is List
+              ? resetTokenErrors.first
+              : resetTokenErrors;
+        }
+        throw ValidationException(errorMessage);
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('Unable to connect to server');
+      } else if (e.response?.data != null &&
+          e.response?.data['message'] != null) {
+        errorMessage = e.response?.data['message'];
+        throw PasswordResetException(errorMessage);
       }
 
-      final response = await _repository.resendOtp(request);
-
-      return {
-        'success': true,
-        'message': response.message,
-      };
+      throw PasswordResetException('Token verification failed');
     } catch (e) {
-      final errorMessage = e.toString().replaceFirst('Exception: ', '');
-
-      bool isExpired = errorMessage.contains('expired:true');
-      bool rateLimited = errorMessage.contains('rateLimited:true');
-      String cleanMessage = errorMessage.split('|').first;
-
-      return {
-        'success': false,
-        'message': cleanMessage,
-        'is_expired': isExpired,
-        'rate_limited': rateLimited,
-      };
+      if (e is PasswordResetException ||
+          e is ValidationException ||
+          e is NetworkException) {
+        rethrow;
+      }
+      throw PasswordResetException('Token verification failed: $e');
     }
   }
 
-  // Helper method to validate OTP format
-  Map<String, dynamic> validateOtpToken(String otpToken) {
-    if (otpToken.trim().isEmpty) {
-      return {
-        'valid': false,
-        'message': 'OTP is required',
-      };
-    }
+  Future<PasswordResetResponse> resetPassword(
+      ResetPasswordRequest request) async {
+    try {
+      final response = await _dio
+          .post('/auth/reset-password', data: request.toJson())
+          .timeout(Duration(seconds: 15));
 
-    if (otpToken.length != 6) {
-      return {
-        'valid': false,
-        'message': 'OTP must be 6 digits',
-      };
-    }
+      if (response.data == null) {
+        throw PasswordResetException('Empty response from server');
+      }
 
-    if (!RegExp(r'^\d{6}$').hasMatch(otpToken)) {
-      return {
-        'valid': false,
-        'message': 'OTP must contain only numbers',
-      };
-    }
+      return PasswordResetResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      String errorMessage = 'Password reset failed';
 
-    return {
-      'valid': true,
-      'message': 'OTP format is valid',
-    };
+      if (e.response?.statusCode == 404) {
+        if (e.response?.data['message']?.contains('Token tidak ditemukan')) {
+          throw PasswordResetException('Reset token not found or expired');
+        } else if (e.response?.data['message']
+            ?.contains('User tidak ditemukan')) {
+          throw PasswordResetException('User not found');
+        } else {
+          throw PasswordResetException('Reset token or user not found');
+        }
+      } else if (e.response?.statusCode == 422 &&
+          e.response?.data['errors'] != null) {
+        final errors = e.response?.data['errors'] as Map<String, dynamic>;
+        if (errors.containsKey('password')) {
+          final passwordErrors = errors['password'];
+          errorMessage =
+              passwordErrors is List ? passwordErrors.first : passwordErrors;
+        } else if (errors.containsKey('reset_token_id')) {
+          final tokenErrors = errors['reset_token_id'];
+          errorMessage = tokenErrors is List ? tokenErrors.first : tokenErrors;
+        } else {
+          errorMessage = 'Validation failed';
+        }
+        throw ValidationException(errorMessage);
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('Unable to connect to server');
+      } else if (e.response?.data != null &&
+          e.response?.data['message'] != null) {
+        errorMessage = e.response?.data['message'];
+        throw PasswordResetException(errorMessage);
+      }
+
+      throw PasswordResetException('Password reset failed');
+    } catch (e) {
+      if (e is PasswordResetException ||
+          e is ValidationException ||
+          e is NetworkException) {
+        rethrow;
+      }
+      throw PasswordResetException('Password reset failed: $e');
+    }
   }
 
-  bool isEmailFormat(String identifier) {
-    return identifier.contains('@') && identifier.contains('.');
-  }
+  Future<ResendOtpResponse> resendOtp(ResendOtpRequest request) async {
+    try {
+      final response = await _dio
+          .post('/auth/resend-otp', data: request.toJson())
+          .timeout(Duration(seconds: 15));
 
-  String getIdentifierType(String identifier) {
-    return isEmailFormat(identifier) ? 'email' : 'NIP';
-  }
+      if (response.data == null) {
+        throw PasswordResetException('Empty response from server');
+      }
 
-  Map<String, dynamic> validatePassword(
-      String password, String confirmPassword) {
-    if (password.trim().isEmpty) {
-      return {
-        'valid': false,
-        'message': 'Password is required',
-      };
+      return ResendOtpResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      String errorMessage = 'Failed to resend OTP';
+
+      if (e.response?.statusCode == 404) {
+        throw PasswordResetException('Reset token not found');
+      } else if (e.response?.statusCode == 410) {
+        errorMessage = e.response?.data['message'] ?? 'Reset token has expired';
+        throw PasswordResetException('$errorMessage|expired:true');
+      } else if (e.response?.statusCode == 429) {
+        errorMessage = e.response?.data['message'] ??
+            'Please wait before requesting OTP again';
+        throw PasswordResetException('$errorMessage|rateLimited:true');
+      } else if (e.response?.statusCode == 422 &&
+          e.response?.data['errors'] != null) {
+        final errors = e.response?.data['errors'] as Map<String, dynamic>;
+        if (errors.containsKey('reset_token_id')) {
+          final tokenErrors = errors['reset_token_id'];
+          errorMessage = tokenErrors is List ? tokenErrors.first : tokenErrors;
+        }
+        throw ValidationException(errorMessage);
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('Unable to connect to server');
+      } else if (e.response?.data != null &&
+          e.response?.data['message'] != null) {
+        errorMessage = e.response?.data['message'];
+        throw PasswordResetException(errorMessage);
+      }
+
+      throw PasswordResetException('Failed to resend OTP');
+    } catch (e) {
+      if (e is PasswordResetException ||
+          e is ValidationException ||
+          e is NetworkException) {
+        rethrow;
+      }
+      throw PasswordResetException('Failed to resend OTP: $e');
     }
-
-    if (password.length < 6) {
-      return {
-        'valid': false,
-        'message': 'Password must be at least 6 characters',
-      };
-    }
-
-    if (password != confirmPassword) {
-      return {
-        'valid': false,
-        'message': 'Passwords do not match',
-      };
-    }
-
-    bool hasUpperCase = password.contains(RegExp(r'[A-Z]'));
-    bool hasLowerCase = password.contains(RegExp(r'[a-z]'));
-    bool hasDigits = password.contains(RegExp(r'[0-9]'));
-    bool hasSpecialCharacters =
-        password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
-
-    List<String> suggestions = [];
-    if (!hasUpperCase) suggestions.add('uppercase letter');
-    if (!hasLowerCase) suggestions.add('lowercase letter');
-    if (!hasDigits) suggestions.add('number');
-    if (!hasSpecialCharacters) suggestions.add('special character');
-
-    int strength = 0;
-    if (hasUpperCase) strength++;
-    if (hasLowerCase) strength++;
-    if (hasDigits) strength++;
-    if (hasSpecialCharacters) strength++;
-    if (password.length >= 8) strength++;
-
-    String strengthText = 'Weak';
-    if (strength >= 4)
-      strengthText = 'Strong';
-    else if (strength >= 2) strengthText = 'Medium';
-
-    return {
-      'valid': true,
-      'message': 'Password is valid',
-      'strength': strengthText,
-      'strength_score': strength,
-      'suggestions': suggestions,
-    };
-  }
-
-  bool isValidUuid(String uuid) {
-    final uuidRegex = RegExp(
-        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
-    return uuidRegex.hasMatch(uuid);
-  }
-
-  Map<String, dynamic> validateResetToken(String resetTokenId) {
-    if (resetTokenId.trim().isEmpty) {
-      return {
-        'valid': false,
-        'message': 'Reset token is required',
-      };
-    }
-
-    if (!isValidUuid(resetTokenId)) {
-      return {
-        'valid': false,
-        'message': 'Invalid reset token format',
-      };
-    }
-
-    return {
-      'valid': true,
-      'message': 'Reset token is valid',
-    };
   }
 }
