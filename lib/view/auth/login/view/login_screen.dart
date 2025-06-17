@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:fortis_apps/widget_global/custom_button/custom_button.dart';
 import 'package:go_router/go_router.dart';
@@ -52,6 +53,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+      ),
       backgroundColor: Colors.white,
       body: Column(
         children: [
@@ -62,7 +66,6 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 children: [
-                  const SizedBox(height: 50),
                   // Checkmark icon
                   Container(
                     width: 40,
@@ -80,10 +83,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Image(
-                      image: AssetImage('assets/images/logo-attendances-2.png'),
-                      width: 24,
-                      height: 24,
+                    child: Padding(
+                      padding: const EdgeInsets.all(7),
+                      child: SvgPicture.asset(
+                        'assets/icon/Check_fill.svg',
+                        width: 24,
+                        height: 24,
+                        colorFilter: ColorFilter.mode(
+                          blueMainColor,
+                          BlendMode.srcIn,
+                        ),
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -115,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
