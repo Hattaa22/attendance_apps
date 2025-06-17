@@ -31,7 +31,7 @@ class ApiService {
         },
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401) {
-            print('🔑 401 Unauthorized detected on ${e.requestOptions.path}');
+            print('401 Unauthorized detected on ${e.requestOptions.path}');
           }
 
           return handler.next(e);
