@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:fortis_apps/widget_global/custom_button/custom_button.dart';
 import 'package:go_router/go_router.dart';
@@ -18,7 +17,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
-<<<<<<< API-logic_Daffa
     return ChangeNotifierProvider(
       create: (context) => LoginController(),
       child: Scaffold(
@@ -56,60 +54,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 24,
                         height: 24,
                       ),
-=======
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-      ),
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // White background section
-          Container(
-            color: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                children: [
-                  // Checkmark icon
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border:
-                          Border.all(color: Color.fromRGBO(225, 230, 236, 1)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 1,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(7),
-                      child: SvgPicture.asset(
-                        'assets/icon/Check_fill.svg',
-                        width: 24,
-                        height: 24,
-                        colorFilter: ColorFilter.mode(
-                          blueMainColor,
-                          BlendMode.srcIn,
-                        ),
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Welcome text
-                  const Text(
-                    'Welcome to Attendance!',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
->>>>>>> login-reset-password_Wildan
                     ),
                     const SizedBox(height: 16),
                     const Text(
@@ -138,15 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-<<<<<<< API-logic_Daffa
                     const SizedBox(height: 30),
                   ],
                 ),
-=======
-                  ),
-                  const SizedBox(height: 20),
-                ],
->>>>>>> login-reset-password_Wildan
               ),
             ),
             // Grey background section
