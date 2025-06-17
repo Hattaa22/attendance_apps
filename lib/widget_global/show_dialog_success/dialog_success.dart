@@ -56,6 +56,7 @@ class CustomSuccessDialog extends StatelessWidget {
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   // Message

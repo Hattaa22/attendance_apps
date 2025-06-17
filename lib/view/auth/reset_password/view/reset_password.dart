@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
-import 'package:fortis_apps/widget_global/show_dialog_success/dialog_success.dart';
-
+import 'package:go_router/go_router.dart';
 import '../../../../widget_global/custom_button/custom_button.dart';
 import '../../../../widget_global/form_field_one/form_field_one.dart';
 
@@ -45,17 +44,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       _emailError = null;
     });
     return true;
-  }
-
-  void _sendToEmail(BuildContext context, String email) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => CustomSuccessDialog(
-        title: 'Email terkirim!',
-        message: 'Kami telah mengirim link reset password ke email $email',
-      ),
-    );
   }
 
   @override
@@ -131,7 +119,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         isEnabled: _emailController.text.isNotEmpty,
                         onPressed: () {
                           if (_isValidEmail(_emailController.text)) {
-                             _sendToEmail(context, _emailController.text);
+                             context.push('/otp', extra: _emailController.text);
                           }
                         },
                       ),

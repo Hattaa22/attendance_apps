@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fortis_apps/core/color/colors.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class Navigation extends StatelessWidget {
   final int currentIndex;
@@ -11,40 +12,32 @@ class Navigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      items: const [
-        BottomNavigationBarItem(
-          icon: ImageIcon(
-            AssetImage('assets/icon/Home.png'),
-            size: 30,
-          ),
+      items: [
+        const BottomNavigationBarItem(
+          icon: Icon(LucideIcons.house, size: 25),
           label: 'Home',
         ),
-        BottomNavigationBarItem(
-          icon: ImageIcon(
-            AssetImage('assets/icon/Desk_alt.png'),
-            size: 30,
+        const BottomNavigationBarItem(
+          icon: Icon(
+            LucideIcons.clipboardList,
+            size: 25,
           ),
-          label: 'Attedance',
+          label: 'Attendance',
         ),
-        BottomNavigationBarItem(
-          icon: ImageIcon(
-            AssetImage('assets/icon/Date_range.png'),
-            size: 30,
-          ),
+        const BottomNavigationBarItem(
+          icon: Icon(LucideIcons.calendarDays, size: 25),
           label: 'Calendar',
         ),
         BottomNavigationBarItem(
-          icon: ImageIcon(
-            AssetImage('assets/icon/Sign_out_squre.png'),
-            size: 30,
+          icon: Transform(
+            transform: Matrix4.identity()..scale(-1.0, 1.0, 1.0),
+            alignment: Alignment.center,
+            child: const Icon(LucideIcons.logOut, size: 25),
           ),
           label: 'Leave',
         ),
-        BottomNavigationBarItem(
-          icon: ImageIcon(
-            AssetImage('assets/icon/User_cicrle_light.png'),
-            size: 30,
-          ),
+        const BottomNavigationBarItem(
+          icon: Icon(LucideIcons.circleUserRound, size: 25),
           label: 'Profile',
         ),
       ],

@@ -1,4 +1,5 @@
 
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -32,8 +33,8 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/images/logo-check.png',
+            SvgPicture.asset(
+              'assets/icon/Check_fill.svg',
               width: 50,
               height: 50,
             ),
