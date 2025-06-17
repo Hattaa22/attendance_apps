@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:fortis_apps/view/splash_screen/splash_screen.dart';
-
 import 'core/router/router.dart';
 
 Future<void> main() async {

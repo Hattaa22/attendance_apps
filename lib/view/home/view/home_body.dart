@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
 
@@ -755,9 +756,8 @@ class _HomeBodyState extends State<HomeBody> {
                               shape: BoxShape.circle,
                             ),
                             padding: const EdgeInsets.all(8),
-                            child: Image.asset(
-                              'assets/icon/location.png',
-                              color: whiteMainColor,
+                            child: SvgPicture.asset(
+                              'assets/icon/Pin_fill.svg',
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -795,10 +795,9 @@ class _HomeBodyState extends State<HomeBody> {
                       child: SizedBox(
                         width: 35,
                         height: 35,
-                        child: Image.asset(
-                          'assets/icon/bell_pin_fill.png',
-                          color: whiteMainColor,
-                          fit: BoxFit.contain,
+                        child: SvgPicture.asset(
+                            'assets/icon/Bell_pin_fill.svg',
+                            fit: BoxFit.contain,
                         ),
                       ),
                     ),
@@ -849,8 +848,12 @@ class _HomeBodyState extends State<HomeBody> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Image.asset('assets/icon/alarm-clock.png',
-                                  width: 15, height: 15, color: blueMainColor),
+                              SvgPicture.asset(
+                                'assets/icon/Alarm_clock.svg',
+                                width: 15,
+                                height: 15,
+                                fit: BoxFit.contain
+                              ),
                               const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
@@ -1116,19 +1119,19 @@ class _HomeBodyState extends State<HomeBody> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   _buildTimeStatusCard(
-                                    imagePath: 'assets/icon/Clock_fill.png',
+                                    imagePath: 'assets/icon/Clock_fill.svg',
                                     time: '08:00 AM',
                                     label: 'Clock In',
                                     screenWidth: screenWidth,
                                   ),
                                   _buildTimeStatusCard(
-                                    imagePath: 'assets/icon/Clock_fill.png',
+                                    imagePath: 'assets/icon/Clock_fill.svg',
                                     time: '04:00 PM',
                                     label: 'Clock Out',
                                     screenWidth: screenWidth,
                                   ),
                                   _buildTimeStatusCard(
-                                    imagePath: 'assets/icon/Clock_fill.png',
+                                    imagePath: 'assets/icon/Clock_fill.svg',
                                     time: '00:00:00',
                                     label: 'Working Hrs',
                                     screenWidth: screenWidth,
@@ -1158,11 +1161,11 @@ class _HomeBodyState extends State<HomeBody> {
   }) {
     return Column(
       children: [
-        Image.asset(
+        SvgPicture.asset(
           imagePath,
           width: 24,
           height: 24,
-          color: blueMainColor,
+          colorFilter: ColorFilter.mode(blueMainColor, BlendMode.srcIn),
           fit: BoxFit.contain,
         ),
         const SizedBox(height: 3),
