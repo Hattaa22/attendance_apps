@@ -12,7 +12,7 @@ class CustomPasswordField extends StatefulWidget {
     required this.controller,
     required this.hintText,
     required this.labelText,
-    required this.onChanged,
+    required this.onChanged, String? errorText,
   });
 
   @override

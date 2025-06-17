@@ -45,10 +45,25 @@ class AuthService {
 
   Future<LoginResponse> login(String identifier, String password) async {
     try {
-      final response = await _dio.post('/auth/login', data: {
+      // Add debug logging
+      print('🚀 AuthService: Making login request');
+      print('   Endpoint: /auth/login');
+      print('   Identifier: $identifier');
+      print('   Password: ${password.isNotEmpty ? '[PROVIDED]' : '[EMPTY]'}');
+
+      final requestData = {
         'identifier': identifier,
         'password': password,
-      }).timeout(Duration(seconds: 15));
+      };
+      print('   Request data: $requestData');
+
+      final response = await _dio
+          .post('/auth/login', data: requestData)
+          .timeout(Duration(seconds: 15));
+
+      print('✅ AuthService: Response received');
+      print('   Status: ${response.statusCode}');
+      print('   Response data: ${response.data}');
 
       if (response.data == null) {
         throw AuthException('Empty response from server');
@@ -56,6 +71,13 @@ class AuthService {
 
       return LoginResponse.fromJson(response.data);
     } on DioException catch (e) {
+      // Enhanced error logging
+      print('❌ AuthService: DioException caught');
+      print('   Status code: ${e.response?.statusCode}');
+      print('   Response data: ${e.response?.data}');
+      print('   Error type: ${e.type}');
+      print('   Error message: ${e.message}');
+
       String errorMessage = 'Login failed';
 
       if (e.response?.statusCode == 422 && e.response?.data != null) {
@@ -75,6 +97,7 @@ class AuthService {
         }
         throw ValidationException(errorMessage);
       } else if (e.response?.statusCode == 401) {
+        print('   🔑 401 Error details: ${e.response?.data}');
         throw UnauthorizedException('Invalid email/NIP or password');
       } else if (e.response?.statusCode == 429) {
         throw AuthException('Too many login attempts. Please try again later.');
