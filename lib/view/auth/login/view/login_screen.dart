@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:fortis_apps/widget_global/custom_button/custom_button.dart';
 import 'package:go_router/go_router.dart';
@@ -48,11 +49,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Image(
-                        image:
-                            AssetImage('assets/images/logo-attendances-2.png'),
-                        width: 24,
-                        height: 24,
+                      child: Padding(
+                        padding: const EdgeInsets.all(7),
+                        child: SvgPicture.asset(
+                          'assets/icon/Check_fill.svg',
+                          width: 24,
+                          height: 24,
+                          colorFilter: ColorFilter.mode(
+                            blueMainColor,
+                            BlendMode.srcIn,
+                          ),
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
