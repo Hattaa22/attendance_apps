@@ -8,6 +8,8 @@ import '../../../widget_global/form_field_one/form_field_one.dart';
 import '../widget/multi_select.dart';
 import '../widget/custom_calendar.dart';
 import '../model/event_data.dart';
+import 'package:get/get.dart';
+import '../controller/department_controller.dart';
 
 class AddMeetingPage extends StatefulWidget {
   const AddMeetingPage({super.key});
@@ -17,14 +19,15 @@ class AddMeetingPage extends StatefulWidget {
 }
 
 class _AddMeetingPageState extends State<AddMeetingPage> {
+  final DepartmentController _departmentController =
+      Get.put(DepartmentController());
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   List<String> _selectedTeamMembers = [];
   DateTime? _selectedDate;
   String? _selectedType;
   String? _selectedDepartment;
-  String? _selectedHeadDepartment;
-  String? _selectedTeamDepartment;
+  List<String> _selectedTeamDepartment = [];
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
 
@@ -33,6 +36,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
     super.initState();
     _titleController.addListener(_onFormChanged);
     _descriptionController.addListener(_onFormChanged);
+    _departmentController.loadDepartments();
   }
 
   void _onFormChanged() {
@@ -43,8 +47,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
     bool baseValidation = _titleController.text.isNotEmpty &&
         _selectedType != null &&
         _selectedDepartment != null &&
-        _selectedHeadDepartment != null &&
-        _selectedTeamDepartment != null &&
+        _selectedTeamDepartment.isNotEmpty &&
         _selectedTeamMembers.length == 3 &&
         _selectedDate != null &&
         _startTime != null &&
@@ -395,16 +398,25 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              CustomDropdownFormField(
-                hint: 'Select',
-                value: _selectedDepartment,
-                items: ['IT', 'HRD', 'Marketing', 'Finance'],
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedDepartment = newValue;
-                  });
-                },
-              ),
+              Obx(() => CustomDropdownFormField(
+                    hint: 'Select',
+                    value: _selectedDepartment,
+                    items: _departmentController.departments
+                        .map((d) => d.department)
+                        .toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedDepartment = newValue;
+                        final selected = _departmentController.departments
+                            .firstWhere((d) => d.department == newValue);
+                        _departmentController.selectDepartment(selected);
+                        _selectedTeamDepartment = [];
+                        _selectedTeamMembers = [];
+                        _departmentController.teamDepartments.clear();
+                        _departmentController.teamUsers.clear();
+                      });
+                    },
+                  )),
 
               const SizedBox(height: 16),
 
@@ -413,16 +425,26 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              CustomDropdownFormField(
-                hint: 'Select',
-                value: _selectedHeadDepartment,
-                items: ['Head Department'],
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedHeadDepartment = newValue;
-                  });
-                },
-              ),
+              Obx(() {
+                final selectedDept = _departmentController.departments
+                    .firstWhereOrNull(
+                        (d) => d.department == _selectedDepartment);
+                final headName = selectedDept?.managerDepartment ?? '-';
+                return Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: greyMainColor),
+                  ),
+                  child: Text(
+                    headName,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                );
+              }),
 
               const SizedBox(height: 16),
 
@@ -431,16 +453,27 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              CustomDropdownFormField(
-                hint: 'Select',
-                value: _selectedTeamDepartment,
-                items: ['Team Adit', 'Team Denis'],
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedTeamDepartment = newValue;
-                  });
-                },
-              ),
+              Obx(() => CustomMultiSelect(
+                    whenEmpty: 'Select Team Departments',
+                    options: _departmentController.teamDepartments
+                        .map((team) => team.name)
+                        .toList(),
+                    selectedValues: _selectedTeamDepartment,
+                    onChanged: (values) {
+                      setState(() {
+                        _selectedTeamDepartment = values;
+                        // Ambil semua team yang dipilih
+                        final selectedTeams = _departmentController
+                            .teamDepartments
+                            .where((d) => values.contains(d.name))
+                            .toList();
+                        // Panggil controller untuk load user dari semua team yang dipilih
+                        _departmentController.selectTeams(selectedTeams);
+                        // Reset pilihan user jika tim berubah
+                        _selectedTeamMembers = [];
+                      });
+                    },
+                  )),
 
               const SizedBox(height: 16),
 
@@ -449,19 +482,19 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              CustomMultiSelect(
-                options: const [
-                  'Adit', 'Denis', 'Budi', 'Joko', 'Joni', 'Jono', 'Jone'
-                ],
-                selectedValues: _selectedTeamMembers,
-                onChanged: (values) {
-                  setState(() {
-                    _selectedTeamMembers = values;
-                  });
-                },
-                whenEmpty: 'Select team members (max 3)',
-                maxSelection: 3,
-              ),
+              Obx(() => CustomMultiSelect(
+                    options: _departmentController.teamUsers
+                        .map((user) => user.name)
+                        .toList(),
+                    selectedValues: _selectedTeamMembers,
+                    onChanged: (values) {
+                      setState(() {
+                        _selectedTeamMembers = values;
+                      });
+                    },
+                    whenEmpty: 'Select team members (max 3)',
+                    maxSelection: 3,
+                  )),
 
               const SizedBox(height: 16),
 
