@@ -23,6 +23,8 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
       Get.put(DepartmentController());
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _urlController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
   List<String> _selectedTeamMembers = [];
   DateTime? _selectedDate;
   String? _selectedType;
@@ -51,13 +53,14 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
         _selectedTeamMembers.length == 3 &&
         _selectedDate != null &&
         _startTime != null &&
-        _endTime != null;
+        _endTime != null && 
+        _descriptionController.text.isNotEmpty;
 
-    if (_selectedType == 'Online') {
-      return baseValidation && _descriptionController.text.isNotEmpty;
+    if (_selectedType == 'online') {
+      return baseValidation && _urlController.text.isNotEmpty;
+    } else {
+      return baseValidation && _locationController.text.isNotEmpty;
     }
-
-    return baseValidation;
   }
 
   void _setMeeting(BuildContext context, String type) {
@@ -65,10 +68,10 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => CustomSuccessDialog(
-        title: type == 'Online'
+        title: type == 'online'
             ? 'Online Meeting has been set!'
             : 'Offline Meeting has been set!',
-        message: type == 'Online'
+        message: type == 'online'
             ? 'Departement team member will receive an email containing the meeting details and a link to join the online session.'
             : 'You will receive a notification as a reminder of the meeting’s time and physical location.',
       ),
@@ -383,7 +386,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
               CustomDropdownFormField(
                 hint: 'Select',
                 value: _selectedType,
-                items: ['Online', 'Offline'],
+                items: ['online', 'offline'],
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedType = newValue;
@@ -441,7 +444,8 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                   ),
                   child: Text(
                     headName,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                 );
               }),
@@ -490,6 +494,13 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                     onChanged: (values) {
                       setState(() {
                         _selectedTeamMembers = values;
+                        // Ambil user yang dipilih berdasarkan nama
+                        final selectedUsers = _departmentController.teamUsers
+                            .where((user) =>
+                                _selectedTeamMembers.contains(user.name))
+                            .toList();
+                        _departmentController.selectedUsers
+                            .assignAll(selectedUsers);
                       });
                     },
                     whenEmpty: 'Select team members (max 3)',
@@ -580,25 +591,57 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 ],
               ),
 
-              // Description (only show if Online is selected, at the bottom)
-              if (_selectedType == 'Online') ...[
-                const SizedBox(height: 16),
+              const SizedBox(height: 16),
+              if (_selectedType == 'online')
                 FormFieldOne(
-                  controller: _descriptionController,
-                  labelText: 'Description',
-                  hintText: 'Add a link or description',
+                  controller: _urlController,
+                  labelText: 'Link/URL',
+                  hintText: 'Add a link/url for online meeting',
                   maxLines: 3,
                   onChanged: (value) => _onFormChanged(),
-                ),
-              ],
+                )
+              else if (_selectedType == 'offline')
+                FormFieldOne(
+                  controller: _locationController,
+                  labelText: 'Location',
+                  hintText: 'Add a location for offline meeting',
+                  onChanged: (value) => _onFormChanged(),
+                )
+              else
+                const SizedBox.shrink(),
+              const SizedBox(height: 16),
+              FormFieldOne(
+                controller: _descriptionController,
+                labelText: 'Description',
+                hintText: 'Add description ',
+                maxLines: 3,
+                onChanged: (value) => _onFormChanged(),
+              ),
               const SizedBox(height: 22),
               CustomButton(
                 text: 'Set Meeting',
                 isEnabled: _isFormValid(),
                 onPressed: _isFormValid()
-                    ? () {
-                        Navigator.of(context).pop();
-                        _setMeeting(context, _selectedType ?? '');
+                    ? () async {
+                        final result =
+                            await _departmentController.createMeeting(
+                          title: _titleController.text,
+                          type: _selectedType!,
+                          date: _selectedDate!,
+                          startTime: _startTime!,
+                          endTime: _endTime!,
+                          description: _descriptionController.text,
+                          onlineUrl: _selectedType == 'online'
+                              ? _urlController.text
+                              : null,
+                          location: _selectedType == 'offline'
+                              ? _locationController.text
+                              : null,
+                        );
+                        if (result['success']) {
+                          Navigator.of(context).pop();
+                          _setMeeting(context, _selectedType ?? '');
+                        }
                       }
                     : null,
               )

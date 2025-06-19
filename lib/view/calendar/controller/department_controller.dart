@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/data/repositories/department_repository.dart';
 import '../../../../core/data/models/department_model.dart';
@@ -43,7 +44,8 @@ class DepartmentController extends GetxController {
     error.value = null;
 
     try {
-      final result = await _departmentRepository.getTeamDepartments(departmentId);
+      final result =
+          await _departmentRepository.getTeamDepartments(departmentId);
       if (result['success']) {
         teamDepartments.value = (result['teams'] as List)
             .map((team) => TeamDepartmentModel.fromJson(team))
@@ -73,6 +75,70 @@ class DepartmentController extends GetxController {
       }
     } catch (e) {
       error.value = 'Failed to load team users: $e';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<Map<String, dynamic>> createMeeting({
+    required String title,
+    required String type,
+    required DateTime date,
+    required TimeOfDay startTime,
+    required TimeOfDay endTime,
+    String? description,
+    String? onlineUrl,
+    String? location,
+  }) async {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      // Gabungkan tanggal dan waktu
+      final startDateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        startTime.hour,
+        startTime.minute,
+      );
+      final endDateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        endTime.hour,
+        endTime.minute,
+      );
+
+      // Debug print semua inputan
+      debugPrint('Title: $title');
+      debugPrint('Type: $type');
+      debugPrint('Department ID: ${selectedDepartment.value?.id}');
+      debugPrint('Team IDs: ${selectedTeams.map((t) => t.id).toList()}');
+      debugPrint('User NIPs: ${selectedUsers.map((u) => u.nip).toList()}');
+      debugPrint('Start DateTime: $startDateTime');
+      debugPrint('End DateTime: $endDateTime');
+      debugPrint('Description: $description');
+      debugPrint('Online URL: $onlineUrl');
+      debugPrint('Location: $location');
+
+      // Panggil repository
+      final result = await _departmentRepository.createMeeting(
+        title: title,
+        type: type,
+        departmentId: selectedDepartment.value!.id,
+        teamDepartmentIds: selectedTeams.map((t) => t.id).toList(),
+        userNips: selectedUsers.map((u) => u.nip).toList(),
+        startTime: startDateTime,
+        endTime: endDateTime,
+        onlineUrl: type == 'online' ? onlineUrl : null,
+        description: description,
+        location: type == 'offline' ? location : null,
+      );
+      return result;
+    } catch (e) {
+      error.value = 'Failed to create meeting: $e';
+      return {'success': false, 'message': error.value};
     } finally {
       isLoading.value = false;
     }
