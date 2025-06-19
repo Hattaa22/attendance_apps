@@ -132,7 +132,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(height: 16),
                             ],
 
-                            // Email/NIP field (static label)
                             FormFieldOne(
                               controller: controller.emailController,
                               labelText: 'Email or NIP',
@@ -161,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   context.push('/resetPassword');
                                 },
                                 style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
+
                                   minimumSize: const Size(50, 30),
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
@@ -186,19 +185,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: controller.isLoading
                                   ? null
                                   : () async {
-                                      // Validation and detection happens here on submit
                                       final result = await controller.login();
-
                                       if (result['success']) {
-                                        // Login successful - navigate to home
                                         context.go('/home');
                                       }
-                                      // Error handling is done in the controller
-                                      // UI will update automatically via Consumer
                                     },
                             ),
 
-                            // Show loading indicator
                             if (controller.isLoading) ...[
                               const SizedBox(height: 16),
                               const Center(
