@@ -6,6 +6,7 @@ import '../../profile/widgets/profile_header.dart';
 import '../../profile/widgets/profile_detail_card.dart';
 import '../../profile/widgets/profile_action_button.dart';
 import '../../profile/widgets/change_password_alert.dart';
+import '../../profile/widgets/log_out.dart'; // ✅ Add this import
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -47,10 +48,15 @@ class ProfilePage extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 16),
+              
               ProfileActionButton(
                 label: 'Logout',
                 iconPath: 'icon/Sign_out_squre_fill.png',
-                onTap: () {},
+                onTap: () {
+                  LogOutPopup.show(
+                    context
+                  );
+                },
               ),
             ],
           ),
