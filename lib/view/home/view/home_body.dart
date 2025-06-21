@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+// import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:fortis_apps/core/color/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -7,6 +11,10 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
 
 import 'dart:async';
+
+import '../controller/home_controller.dart';
+
+// import '../controller/home_controller.dart';
 
 class HomeBody extends StatefulWidget {
   const HomeBody({super.key});
@@ -16,9 +24,44 @@ class HomeBody extends StatefulWidget {
 }
 
 class _HomeBodyState extends State<HomeBody> {
+  final HomeController homeController = Get.put(HomeController());
+
+  Position? _currentLocation;
+  late bool servicePermission = false;
+  late LocationPermission permission;
+
+  String currentAdress = "";
+
+  Future<Position> _getCurrentLocation() async {
+    servicePermission = await Geolocator.isLocationServiceEnabled();
+    if (!servicePermission) {
+      debugPrint("service disabled");
+    }
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+  }
+
+  _getAdressFromCoordinates() async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+          _currentLocation!.latitude, _currentLocation!.longitude,
+          localeIdentifier: 'id_ID');
+      Placemark place = placemarks[0];
+
+      setState(() {
+        currentAdress = "${place.locality}, ${place.country}";
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
   // Sample user data
   final String userName = "sawaw";
-  final String location = "Malang, East Java";
 
   String selectedMonth = DateFormat('MMM').format(DateTime.now()).toUpperCase();
 
@@ -40,11 +83,17 @@ class _HomeBodyState extends State<HomeBody> {
   // Membuat timer yang berjalan terus - menerus perdetik
   void initState() {
     super.initState();
+    _initializeLocation();
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
         _currentTime = DateTime.now();
       });
     });
+  }
+
+  void _initializeLocation() async {
+    _currentLocation = await _getCurrentLocation();
+    await _getAdressFromCoordinates();
   }
 
   // Membatalkan timer saat widget dihapus agar tidak terus berjalan di background
@@ -561,30 +610,71 @@ class _HomeBodyState extends State<HomeBody> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.of(context).pop();
-
                         bool wasClockIn = !isClockedIn;
 
-                        setState(() {
-                          if (!isClockedIn) {
-                            isClockedIn = true;
-                            isClockedOut = false;
-                          } else {
-                            // Untuk Clock Out, kembali ke state awal
-                            isClockedIn = false;
-                            isClockedOut = true;
-                          }
-                        });
+                        try {
+                          // Dapatkan posisi saat ini
+                          Position position = await _getCurrentLocation();
+                          final now = DateTime.now();
 
-                        Future.delayed(Duration(milliseconds: 100), () {
-                          // Tampilkan dialog berdasarkan aksi yang dilakukan
-                          if (wasClockIn) {
-                            _showSuccessClockInDialog();
+                          Map<String, dynamic> result;
+
+                          if (!isClockedIn) {
+                            // Proses Clock In
+                            result = await homeController.clockIn(
+                              latitude: position.latitude,
+                              longitude: position.longitude,
+                              waktu: now,
+                            );
                           } else {
-                            _showSuccessClockOutDialog();
+                            // Proses Clock Out
+                            result = await homeController.clockOut(
+                              latitude: position.latitude,
+                              longitude: position.longitude,
+                              waktu: now,
+                            );
                           }
-                        });
+
+                          if (result['success'] == true) {
+                            setState(() {
+                              if (!isClockedIn) {
+                                isClockedIn = true;
+                                isClockedOut = false;
+                              } else {
+                                isClockedIn = false;
+                                isClockedOut = true;
+                              }
+                            });
+
+                            // Tampilkan dialog sukses
+                            Future.delayed(Duration(milliseconds: 100), () {
+                              if (wasClockIn) {
+                                _showSuccessClockInDialog();
+                              } else {
+                                _showSuccessClockOutDialog();
+                              }
+                            });
+                          } else {
+                            // Tampilkan error message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result['message'] ??
+                                    'Failed to process attendance'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          debugPrint('Error processing attendance: $e');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to process attendance: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       },
                       child: Text(
                         'Yes!',
@@ -776,7 +866,7 @@ class _HomeBodyState extends State<HomeBody> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                location,
+                                "${_currentLocation?.longitude}, ${_currentLocation?.latitude}",
                                 style: GoogleFonts.roboto(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -796,8 +886,8 @@ class _HomeBodyState extends State<HomeBody> {
                         width: 35,
                         height: 35,
                         child: SvgPicture.asset(
-                            'assets/icon/Bell_pin_fill.svg',
-                            fit: BoxFit.contain,
+                          'assets/icon/Bell_pin_fill.svg',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
@@ -848,12 +938,8 @@ class _HomeBodyState extends State<HomeBody> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              SvgPicture.asset(
-                                'assets/icon/Alarm_clock.svg',
-                                width: 15,
-                                height: 15,
-                                fit: BoxFit.contain
-                              ),
+                              SvgPicture.asset('assets/icon/Alarm_clock.svg',
+                                  width: 15, height: 15, fit: BoxFit.contain),
                               const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
