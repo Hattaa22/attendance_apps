@@ -18,8 +18,6 @@ abstract class PasswordResetRepository {
   Map<String, dynamic> validateOtpToken(String otpToken);
   Map<String, dynamic> validatePassword(
       String password, String confirmPassword);
-  Map<String, dynamic> validateResetToken(String resetTokenId);
-  bool isStrongPassword(String password);
   Map<String, String> getPasswordRequirements();
 }
 
@@ -30,16 +28,36 @@ class PasswordResetRepositoryImpl implements PasswordResetRepository {
   Future<Map<String, dynamic>> forgotPassword(
       {required String identifier}) async {
     try {
-      final validation = _validateIdentifier(identifier);
-      if (!validation['valid']) {
+      if (identifier.trim().isEmpty) {
         return {
           'success': false,
-          'message': validation['message'],
+          'message': 'Email or NIP is required',
           'type': 'validation',
         };
       }
 
-      final request = ForgotPasswordRequest(identifier: identifier);
+      // Basic format validation
+      final trimmedIdentifier = identifier.trim();
+      if (trimmedIdentifier.contains('@')) {
+        if (!isEmailFormat(trimmedIdentifier)) {
+          return {
+            'success': false,
+            'message': 'Please enter a valid email address',
+            'type': 'validation',
+          };
+        }
+      } else {
+        if (trimmedIdentifier.length < 2 ||
+            !RegExp(r'^\d+$').hasMatch(trimmedIdentifier)) {
+          return {
+            'success': false,
+            'message': 'Please enter a valid NIP',
+            'type': 'validation',
+          };
+        }
+      }
+
+      final request = ForgotPasswordRequest(identifier: trimmedIdentifier);
 
       if (!request.isValid) {
         return {
@@ -55,7 +73,7 @@ class PasswordResetRepositoryImpl implements PasswordResetRepository {
         'success': true,
         'message': response.message,
         'reset_token_id': response.resetTokenId,
-        'identifier_type': getIdentifierType(identifier),
+        'identifier_type': getIdentifierType(trimmedIdentifier),
       };
     } on ValidationException catch (e) {
       return {
@@ -92,11 +110,10 @@ class PasswordResetRepositoryImpl implements PasswordResetRepository {
     required String otpToken,
   }) async {
     try {
-      final tokenValidation = validateResetToken(resetTokenId);
-      if (!tokenValidation['valid']) {
+      if (resetTokenId.trim().isEmpty) {
         return {
           'success': false,
-          'message': tokenValidation['message'],
+          'message': 'Reset token is required',
           'type': 'validation',
         };
       }
@@ -174,11 +191,11 @@ class PasswordResetRepositoryImpl implements PasswordResetRepository {
     required String passwordConfirmation,
   }) async {
     try {
-      final tokenValidation = validateResetToken(resetTokenId);
-      if (!tokenValidation['valid']) {
+      // Simple token validation
+      if (resetTokenId.trim().isEmpty) {
         return {
           'success': false,
-          'message': tokenValidation['message'],
+          'message': 'Reset token is required',
           'type': 'validation',
         };
       }
@@ -191,7 +208,6 @@ class PasswordResetRepositoryImpl implements PasswordResetRepository {
           'message': passwordValidation['message'],
           'type': 'validation',
           'password_strength': passwordValidation['strength'],
-          'suggestions': passwordValidation['suggestions'],
         };
       }
 
@@ -249,11 +265,10 @@ class PasswordResetRepositoryImpl implements PasswordResetRepository {
   @override
   Future<Map<String, dynamic>> resendOtp({required String resetTokenId}) async {
     try {
-      final tokenValidation = validateResetToken(resetTokenId);
-      if (!tokenValidation['valid']) {
+      if (resetTokenId.trim().isEmpty) {
         return {
           'success': false,
-          'message': tokenValidation['message'],
+          'message': 'Reset token is required',
           'type': 'validation',
         };
       }
@@ -299,7 +314,7 @@ class PasswordResetRepositoryImpl implements PasswordResetRepository {
         'type': 'password_reset',
         'is_expired': isExpired,
         'rate_limited': rateLimited,
-        'can_retry': !rateLimited, // Can retry if not rate limited
+        'can_retry': !rateLimited,
         'retry_suggestion': rateLimited
             ? 'Please wait a few minutes before trying again'
             : isExpired
@@ -316,47 +331,7 @@ class PasswordResetRepositoryImpl implements PasswordResetRepository {
     }
   }
 
-  Map<String, dynamic> _validateIdentifier(String identifier) {
-    if (identifier.trim().isEmpty) {
-      return {
-        'valid': false,
-        'message': 'Email or NIP is required',
-      };
-    }
-
-    identifier = identifier.trim();
-
-    if (identifier.contains('@')) {
-      if (!_isValidEmail(identifier)) {
-        return {
-          'valid': false,
-          'message': 'Please enter a valid email address',
-        };
-      }
-    } else {
-      if (!_isValidNIP(identifier)) {
-        return {
-          'valid': false,
-          'message': 'Please enter a valid NIP',
-        };
-      }
-    }
-
-    return {
-      'valid': true,
-      'message': 'Valid identifier',
-    };
-  }
-
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-        .hasMatch(email);
-  }
-
-  bool _isValidNIP(String nip) {
-    return RegExp(r'^\d{2,10}$').hasMatch(nip);
-  }
-
+  @override
   Map<String, dynamic> validateOtpToken(String otpToken) {
     if (otpToken.trim().isEmpty) {
       return {
@@ -387,14 +362,19 @@ class PasswordResetRepositoryImpl implements PasswordResetRepository {
     };
   }
 
+  @override
   bool isEmailFormat(String identifier) {
-    return identifier.contains('@') && identifier.contains('.');
+    return identifier.contains('@') &&
+        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+            .hasMatch(identifier);
   }
 
+  @override
   String getIdentifierType(String identifier) {
     return isEmailFormat(identifier) ? 'email' : 'NIP';
   }
 
+  @override
   Map<String, dynamic> validatePassword(
       String password, String confirmPassword) {
     if (password.trim().isEmpty) {
@@ -427,45 +407,7 @@ class PasswordResetRepositoryImpl implements PasswordResetRepository {
     };
   }
 
-  bool isValidUuid(String uuid) {
-    final uuidRegex = RegExp(
-        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
-    return uuidRegex.hasMatch(uuid);
-  }
-
   @override
-  Map<String, dynamic> validateResetToken(String resetTokenId) {
-    if (resetTokenId.trim().isEmpty) {
-      return {
-        'valid': false,
-        'message': 'Reset token is required',
-      };
-    }
-
-    if (!isValidUuid(resetTokenId)) {
-      return {
-        'valid': false,
-        'message': 'Invalid reset token format',
-      };
-    }
-
-    return {
-      'valid': true,
-      'message': 'Reset token is valid',
-    };
-  }
-
-  String formatPasswordStrength(Map<String, dynamic> validation) {
-    if (!validation['valid']) return validation['message'];
-
-    String strength = validation['strength'];
-    return 'Password strength: $strength';
-  }
-
-  bool isStrongPassword(String password) {
-    return password.length >= 8;
-  }
-
   Map<String, String> getPasswordRequirements() {
     return {
       'minimum_length': '6 characters',

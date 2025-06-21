@@ -36,13 +36,15 @@ final GoRouter router = GoRouter(initialLocation: '/', routes: <RouteBase>[
   GoRoute(
     name: '/newPassword',
     path: '/newPassword',
-    builder: (context, state) => const NewPasswordPage(),
+    builder: (context, state) => NewPasswordPage(
+      data: state.extra as Map<String, dynamic>?,
+    ),
   ),
   GoRoute(
     name: '/otp',
     path: '/otp',
     builder: (context, state) => OtpPage(
-      email: state.extra as String,
+      data: state.extra as Map<String, dynamic>? ?? {}, // ✅ Correct - Map data
     ),
   ),
   GoRoute(

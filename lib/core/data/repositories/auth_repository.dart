@@ -18,6 +18,10 @@ abstract class AuthRepository {
   Future<void> requireAuthentication([String? customMessage]);
   Future<void> handle401();
   bool isAuthError(String errorMessage);
+  String getIdentifierType(String identifier);
+  Map<String, dynamic> validateLoginInput(String identifier, String password);
+  bool isValidEmailFormat(String email);
+  bool isValidNIPFormat(String nip);
 }
 
 class AuthRepositoryImpl implements AuthRepository {

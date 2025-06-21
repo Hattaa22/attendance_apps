@@ -53,7 +53,7 @@ class LoginTest extends StatelessWidget {
     // await _delay();
 
     // Phase 9: Logout flow (optional - uncomment to test)
-    // await _testLogoutFlow();
+    await _testLogoutFlow();
 
     print(
         '\n🎉 === All Auth Repository tests completed ==='); // Updated message
@@ -141,7 +141,7 @@ class LoginTest extends StatelessWidget {
     // Test with email identifier
     print('3.2 Testing login with email identifier:');
     var emailResult =
-        await authRepository.login('10003', 'password'); // Changed
+        await authRepository.login('10001', 'password'); // Changed
     bool emailLoginSuccess =
         _printLoginResult(emailResult, shouldSucceed: true);
 
