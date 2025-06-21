@@ -1,113 +1,145 @@
 import 'package:flutter/material.dart';
-import '../../profile/widgets/change_photo_profile.dart';
+import 'package:provider/provider.dart';
+import '../controller/profile_controller.dart';
+import '../controller/photo_controller.dart';
+import 'change_photo_profile.dart';
 
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Stack(
+    return Consumer2<ProfileController, PhotoController>(
+      builder: (context, profileController, photoController, child) {
+        final isLoading =
+            profileController.isLoading || photoController.isUpdating;
+
+        return Column(
           children: [
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey[300],
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'images/profile.jpg',
+            Stack(
+              children: [
+                Container(
                   width: 140,
                   height: 140,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[300],
-                      ),
-                      child: Icon(
-                        Icons.person,
-                        size: 70,
-                        color: Colors.grey[600],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: GestureDetector(
-                onTap: () {
-                  // Show change photo modal
-                  ChangePhotoProfile.show(
-                    context,
-                    onTakePhoto: () {
-                      // Handle take photo action
-                      _handleTakePhoto();
-                    },
-                    onChoosePhoto: () {
-                      // Handle choose photo action
-                      _handleChoosePhoto();
-                    },
-                  );
-                },
-                child: Container(
-                  width: 30,
-                  height: 30,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white,
+                    color: Colors.grey[300],
                   ),
-                  child: Image.asset(
-                    'icon/edit.png',
-                    width: 30,
-                    height: 30,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Icon(
-                        Icons.edit,
-                        size: 18,
-                        color: Colors.grey[700],
-                      );
-                    },
+                  child: ClipOval(
+                    child: profileController.buildProfileImage(),
                   ),
                 ),
+
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: isLoading
+                        ? null
+                        : () => _showPhotoChangeDialog(
+                            context, profileController, photoController),
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: isLoading
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.grey[600],
+                              ),
+                            )
+                          : Icon(
+                              Icons.edit,
+                              size: 18,
+                              color: Colors.grey[700],
+                            ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+
+            Text(
+              profileController.isLoading
+                  ? 'Loading...'
+                  : profileController.name,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+                letterSpacing: 0.2 / 100 * 20,
+                color: Colors.black,
               ),
             ),
+            const SizedBox(height: 8),
+
+
+            if (profileController.isLoading) ...[
+              _buildLoadingTag(),
+            ] else if (profileController.error != null) ...[
+              _textTag('Error loading profile'),
+            ] else ...[
+              _textTag(profileController.department),
+            ],
           ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Sawadikap',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            height: 1.2,
-            letterSpacing: 0.2 / 100 * 20,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _textTag('Fulltime'),
-            _dot(),
-            _textTag('Frontend WebDev'),
-            _dot(),
-            _textTag('Joined 25 Feb 2025'),
-          ],
-        )
-      ],
+        );
+      },
+    );
+  }
+
+
+  void _showPhotoChangeDialog(
+    BuildContext context,
+    ProfileController profileController,
+    PhotoController photoController,
+  ) {
+    ChangePhotoProfile.show(
+      context,
+      onTakePhoto: () async {
+        final result = await photoController.takePhoto(context);
+        if (result['success'] && result['profile'] != null) {
+
+          profileController.updateProfileData(result['profile']);
+        }
+      },
+      onChoosePhoto: () async {
+        final result = await photoController.choosePhoto(context);
+        if (result['success'] && result['profile'] != null) {
+
+          profileController.updateProfileData(result['profile']);
+        }
+      },
+    );
+  }
+
+  Widget _buildLoadingTag() {
+    return Container(
+      width: 80,
+      height: 12,
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(6),
+      ),
     );
   }
 
@@ -123,28 +155,5 @@ class ProfileHeader extends StatelessWidget {
         color: const Color(0xFF8B8B8B),
       ),
     );
-  }
-
-  Widget _dot() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      width: 4,
-      height: 4,
-      decoration: const BoxDecoration(
-        color: Color(0xFF8B8B8B),
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-
-  void _handleTakePhoto() {
-    // TODO: Implementasi untuk mengambil foto dari kamera
-    print('Take photo selected');
-  }
-
-  // Method untuk handle choose photo
-  void _handleChoosePhoto() {
-    // TODO: Implementasi untuk memilih foto dari galeri
-    print('Choose photo from gallery selected');
   }
 }

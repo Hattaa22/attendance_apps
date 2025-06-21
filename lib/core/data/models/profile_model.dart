@@ -1,6 +1,7 @@
 class ProfileModel {
   final String nip;
   final String name;
+  final String email;
   final String? department;
   final String? teamDepartment;
   final String? managerDepartment;
@@ -8,6 +9,7 @@ class ProfileModel {
   ProfileModel({
     required this.nip,
     required this.name,
+    required this.email,
     this.department,
     this.teamDepartment,
     this.managerDepartment,
@@ -17,6 +19,7 @@ class ProfileModel {
     return ProfileModel(
       nip: json['nip'].toString(),
       name: json['name'].toString(),
+      email: json['email'].toString(),
       department: json['department'],
       teamDepartment: json['team_department'],
       managerDepartment: json['manager_department'],
@@ -27,6 +30,7 @@ class ProfileModel {
     return {
       'nip': nip,
       'name': name,
+      'email': email,
       'department': department,
       'team_department': teamDepartment,
       'manager_department': managerDepartment,
@@ -40,6 +44,7 @@ class ProfileModel {
       managerDepartment != null && managerDepartment!.isNotEmpty;
 
   String get displayName => name;
+  String get displayEmail => email.isNotEmpty ? email : 'No email';
   String get displayDepartment => department ?? 'No Department';
   String get displayTeam => teamDepartment ?? 'No Team';
   String get displayManager => managerDepartment ?? 'No Manager';
