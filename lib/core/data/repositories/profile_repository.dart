@@ -20,7 +20,6 @@ abstract class ProfileRepository {
     required String password,
     required String passwordConfirmation,
   });
-  Future<Map<String, dynamic>> updateProfilePicture(String imagePath);
   Future<Map<String, dynamic>> validateProfileUpdate({
     required String name,
     String? password,
@@ -252,78 +251,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Map<String, dynamic>> updateProfilePicture(String imagePath) async {
-    try {
-      // Business logic: Check authentication
-      if (!await _authRepository.isAuthenticated()) {
-        return {
-          'success': false,
-          'message': 'Please login to update profile picture',
-          'requiresLogin': true,
-        };
-      }
-
-      // Business logic: Validate image file
-      final imageValidation = _validateImageFile(imagePath);
-      if (!imageValidation['valid']) {
-        return {
-          'success': false,
-          'message': imageValidation['message'],
-          'type': 'validation',
-          'field': 'profile_picture',
-        };
-      }
-
-      // Service call for API operation
-      final updatedProfile = await _service.updateProfilePicture(imagePath);
-
-      // Business logic: Process updated profile data
-      final processedProfile = _processProfileData(updatedProfile);
-
-      return {
-        'success': true,
-        'profile': processedProfile,
-        'message': 'Profile picture updated successfully',
-        'uploaded_at': DateTime.now().toIso8601String(),
-      };
-    } on UnauthorizedException catch (e) {
-      await _authRepository.handle401();
-      return {
-        'success': false,
-        'message': e.message,
-        'requiresLogin': true,
-        'sessionExpired': true,
-      };
-    } on ValidationException catch (e) {
-      return {
-        'success': false,
-        'message': e.message,
-        'type': 'validation',
-      };
-    } on NetworkException catch (e) {
-      return {
-        'success': false,
-        'message': e.message,
-        'type': 'network',
-        'retryable': true,
-      };
-    } on ProfileException catch (e) {
-      return {
-        'success': false,
-        'message': e.message,
-        'type': 'profile',
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to update profile picture',
-        'type': 'unknown',
-        'details': e.toString(),
-      };
-    }
-  }
-
-  @override
   Future<Map<String, dynamic>> validateProfileUpdate({
     required String name,
     String? password,
@@ -373,28 +300,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
-  @override
-  Future<Map<String, dynamic>> getProfileStatistics() async {
-    try {
-      final profileResult = await getProfile();
-      if (!profileResult['success']) return profileResult;
-
-      final profile = profileResult['profile'];
-
-      return {
-        'success': true,
-        'message': 'Profile statistics calculated successfully',
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to calculate profile statistics',
-        'type': 'unknown',
-        'details': e.toString(),
-      };
-    }
-  }
-
   Map<String, dynamic> _validateProfileData({
     required String name,
     String? password,
@@ -429,14 +334,13 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   Map<String, dynamic> _validatePassword(
       String password, String passwordConfirmation) {
-    if (password.length < 8) {
+    if (password.length < 4) {
       return {
         'valid': false,
         'message': 'Password must be at least 8 characters long',
       };
     }
 
-    // Check maximum length
     if (password.length > 255) {
       return {
         'valid': false,
@@ -448,20 +352,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
       return {
         'valid': false,
         'message': 'Password confirmation does not match',
-      };
-    }
-
-    if (!_hasUppercase(password)) {
-      return {
-        'valid': false,
-        'message': 'Password must contain at least one uppercase letter',
-      };
-    }
-
-    if (!_hasLowercase(password)) {
-      return {
-        'valid': false,
-        'message': 'Password must contain at least one lowercase letter',
       };
     }
 
@@ -478,32 +368,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
     };
   }
 
-  Map<String, dynamic> _validateImageFile(String imagePath) {
-    if (imagePath.isEmpty) {
-      return {
-        'valid': false,
-        'message': 'Image file path is required',
-      };
-    }
-
-    final extension = imagePath.toLowerCase().split('.').last;
-    if (!['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(extension)) {
-      return {
-        'valid': false,
-        'message': 'Invalid image format. Allowed: JPG, PNG, GIF, BMP, WebP',
-      };
-    }
-
-    return {
-      'valid': true,
-      'message': 'Image file is valid',
-    };
-  }
-
   Map<String, dynamic> _processProfileData(ProfileModel profile) {
     final profileJson = profile.toJson();
 
-    // Business logic: Add computed fields
     profileJson['display_name'] = _formatDisplayName(profile.name);
     profileJson['initials'] = _getInitials(profile.name);
     profileJson['last_seen'] = DateTime.now().toIso8601String();
@@ -517,34 +384,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
       updatedFields.add('password');
     }
     return updatedFields;
-  }
-
-  List<String> _getCompletedFields(Map<String, dynamic> profile) {
-    List<String> completed = [];
-
-    if (profile['name']?.toString().isNotEmpty == true) completed.add('name');
-    if (profile['email']?.toString().isNotEmpty == true) completed.add('email');
-    if (profile['profile_picture'] != null) completed.add('profile_picture');
-    if (profile['phone']?.toString().isNotEmpty == true) completed.add('phone');
-    if (profile['bio']?.toString().isNotEmpty == true) completed.add('bio');
-
-    return completed;
-  }
-
-  List<String> _getProfileSuggestions(Map<String, dynamic> profile) {
-    List<String> suggestions = [];
-
-    if (profile['profile_picture'] == null) {
-      suggestions.add('Add a profile picture');
-    }
-    if (profile['phone']?.toString().isEmpty != false) {
-      suggestions.add('Add your phone number');
-    }
-    if (profile['bio']?.toString().isEmpty != false) {
-      suggestions.add('Write a short bio');
-    }
-
-    return suggestions;
   }
 
   String _formatDisplayName(String name) {
@@ -570,12 +409,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
     return (words[0][0] + words[words.length - 1][0]).toUpperCase();
   }
 
-  // Validation helper methods
   bool _isValidName(String name) {
     if (name.trim().isEmpty) return false;
     if (name.length < 2 || name.length > 50) return false;
 
-    // Allow letters, spaces, apostrophes, and hyphens
     final nameRegex = RegExp(r"^[a-zA-Z\s\'\-]+$");
     return nameRegex.hasMatch(name);
   }
