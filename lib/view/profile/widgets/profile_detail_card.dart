@@ -1,21 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../controller/profile_controller.dart';
 
 class ProfileDetailCard extends StatelessWidget {
   const ProfileDetailCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: _boxDecoration(),
-      child: Column(
-        children: [
-          _buildDetailRow('User ID', '12345'),
-          _buildDivider(),
-          _buildDetailRow('Email ID', 'sapsup87@gmail.com'),
-          _buildDivider(),
-          _buildDetailRow('Phone Number', '+62 877 1234 1234'),
-        ],
-      ),
+    return Consumer<ProfileController>(
+      builder: (context, controller, child) {
+        return Container(
+          decoration: _boxDecoration(),
+          child: Column(
+            children: [
+              if (controller.isLoading) ...[
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF8B8B8B),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'Loading profile...',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: Color(0xFF8B8B8B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ]
+
+              else if (controller.error != null) ...[
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 16,
+                            color: Colors.red.shade600,
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              controller.error!,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.red.shade700,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () => controller.refreshProfile(),
+                        style: TextButton.styleFrom(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          minimumSize: Size(0, 0),
+                        ),
+                        child: Text(
+                          'Retry',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ]
+
+              else ...[
+                _buildDetailRow('User ID', controller.userId),
+                _buildDivider(),
+                _buildDetailRow('Email ID', controller.email),
+                _buildDivider(),
+                _buildDetailRow('Phone Number', controller.phoneNumber),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -60,6 +150,7 @@ class ProfileDetailCard extends StatelessWidget {
               color: Color(0xFF8B8B8B),
             ),
           ),
+
           isEmail
               ? Builder(
                   builder: (context) {
@@ -112,14 +203,19 @@ class ProfileDetailCard extends StatelessWidget {
                     );
                   },
                 )
-              : Text(
-                  value,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                    color: Colors.black,
+
+              : Flexible(
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
         ],
