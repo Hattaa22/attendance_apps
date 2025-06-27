@@ -125,12 +125,39 @@ class LeaveService {
       final response =
           await _dio.get('/leave/my').timeout(Duration(seconds: 10));
 
-      if (response.data == null) {
-        throw LeaveException('Empty response from server');
+      // Debug 1: Print tipe response
+      print('Response type: ${response.data.runtimeType}');
+
+      // Debug 2: Print struktur response
+      print('Full response: ${response.data}');
+
+      // Handle enveloped response
+      if (response.data is Map<String, dynamic>) {
+        final responseData = response.data as Map<String, dynamic>;
+
+        // Debug 3: Print keys pada envelop
+        print('Response keys: ${responseData.keys.join(', ')}');
+
+        // Handle berbagai kemungkinan struktur envelop
+        if (responseData['data'] != null && responseData['data'] is List) {
+          final leavesData = responseData['data'] as List;
+          print('Leaves data count: ${leavesData.length}');
+          return leavesData.map((json) => LeaveModel.fromJson(json)).toList();
+        } else if (responseData['leaves'] != null &&
+            responseData['leaves'] is List) {
+          final leavesData = responseData['leaves'] as List;
+          print('Leaves data count: ${leavesData.length}');
+          return leavesData.map((json) => LeaveModel.fromJson(json)).toList();
+        }
+      }
+      // Handle jika response langsung array
+      else if (response.data is List) {
+        final leavesData = response.data as List;
+        print('Direct leaves data count: ${leavesData.length}');
+        return leavesData.map((json) => LeaveModel.fromJson(json)).toList();
       }
 
-      final List<dynamic> leavesData = response.data;
-      return leavesData.map((json) => LeaveModel.fromJson(json)).toList();
+      throw LeaveException('Invalid response format');
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
         throw UnauthorizedException(

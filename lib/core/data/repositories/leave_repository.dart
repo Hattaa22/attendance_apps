@@ -1,7 +1,9 @@
 import 'package:intl/intl.dart';
-import '../services/auth_service.dart' show UnauthorizedException, NetworkException;
+import '../services/auth_service.dart'
+    show UnauthorizedException, NetworkException;
 import '../models/leave_model.dart';
-import '../services/leave_service.dart' show LeaveException, LeaveService, ValidationException;
+import '../services/leave_service.dart'
+    show LeaveException, LeaveService, ValidationException;
 import '../repositories/auth_repository.dart';
 
 abstract class LeaveRepository {
@@ -48,6 +50,7 @@ abstract class LeaveRepository {
         return 'Unknown Status';
     }
   }
+
   String formatLeaveType(String type) {
     switch (type.toLowerCase()) {
       case 'paid':
@@ -64,6 +67,7 @@ abstract class LeaveRepository {
         return 'Unknown Type';
     }
   }
+
   String formatLeaveDuration(int days) {
     if (days == 1) {
       return '1 day';
@@ -192,15 +196,20 @@ class LeaveRepositoryImpl implements LeaveRepository {
 
       final leaves = await _service.getMyLeaves();
 
-      final processedLeaves = _processLeaveData(leaves);
+      // Handle empty response
+      if (leaves.isEmpty) {
+        return {
+          'success': true,
+          'message': 'No leave data available',
+          'leaves': [],
+          'total': 0,
+        };
+      }
 
       return {
         'success': true,
         'leaves': leaves.map((leave) => leave.toJson()).toList(),
         'total': leaves.length,
-        'summary': processedLeaves['summary'],
-        'recent_leaves': processedLeaves['recent'],
-        'message': 'Leaves retrieved successfully',
       };
     } on UnauthorizedException catch (e) {
       await _authRepository.handle401();
