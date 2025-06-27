@@ -24,7 +24,7 @@ class HomeBody extends StatefulWidget {
 }
 
 class _HomeBodyState extends State<HomeBody> {
-  final HomeController homeController = Get.put(HomeController());
+  final HomeController homeController = HomeController();
 
   Position? _currentLocation;
   late bool servicePermission = false;

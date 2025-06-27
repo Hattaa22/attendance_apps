@@ -101,17 +101,6 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         };
       }
 
-      final todayAttendance = await _getTodayAttendanceSafely();
-      if (todayAttendance != null && todayAttendance['clock_in'] != null) {
-        return {
-          'success': false,
-          'message': 'You have already clocked in today',
-          'requiresLogin': false,
-          'alreadyClockedIn': true,
-          'clockInTime': todayAttendance['clock_in'],
-        };
-      }
-
       final attendance = await _service.clockIn(
         latitude: latitude,
         longitude: longitude,
@@ -133,6 +122,14 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         'sessionExpired': true,
       };
     } on ValidationException catch (e) {
+      if (e.message.contains('already clocked in')) {
+        return {
+          'success': false,
+          'message': 'You have already clocked in today',
+          'requiresLogin': false,
+          'alreadyClockedIn': true,
+        };
+      }
       return {
         'success': false,
         'message': e.message,
@@ -189,41 +186,17 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         };
       }
 
-      final todayAttendance = await _getTodayAttendanceSafely();
-      if (todayAttendance != null && todayAttendance['clock_out'] != null) {
-        return {
-          'success': false,
-          'message': 'You have already clocked out today',
-          'requiresLogin': false,
-          'alreadyClockedOut': true,
-          'clockOutTime': todayAttendance['clock_out'],
-        };
-      }
-
-      if (todayAttendance == null || todayAttendance['clock_in'] == null) {
-        return {
-          'success': false,
-          'message': 'You must clock in first before clocking out',
-          'requiresLogin': false,
-          'needsClockIn': true,
-        };
-      }
-
       final attendance = await _service.clockOut(
         latitude: latitude,
         longitude: longitude,
         waktu: waktu,
       );
 
-      final workDuration =
-          _calculateWorkDuration(todayAttendance['clock_in'], waktu);
-
       return {
         'success': true,
         'message': 'Clock-out successful',
         'attendance': attendance.toJson(),
         'clockOutTime': waktu.toIso8601String(),
-        'workDuration': workDuration,
       };
     } on UnauthorizedException catch (e) {
       await _authRepository.handle401();
@@ -234,6 +207,21 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         'sessionExpired': true,
       };
     } on ValidationException catch (e) {
+      if (e.message.contains('already clocked out')) {
+        return {
+          'success': false,
+          'message': 'You have already clocked out today',
+          'requiresLogin': false,
+          'alreadyClockedOut': true,
+        };
+      } else if (e.message.contains('no clock in record')) {
+        return {
+          'success': false,
+          'message': 'You must clock in first before clocking out',
+          'requiresLogin': false,
+          'needsClockIn': true,
+        };
+      }
       return {
         'success': false,
         'message': e.message,
