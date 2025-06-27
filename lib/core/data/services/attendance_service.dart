@@ -48,11 +48,20 @@ class AttendanceService {
     required DateTime waktu,
   }) async {
     try {
-      final response = await _dio.post('/attendance/clock-in', data: {
+      print('DEBUG: Service - Starting clockIn API call...');
+      final requestData = {
         'latitude': latitude,
         'longitude': longitude,
-        'waktu': DateFormat('yyyy-MM-dd HH:mm:ss').format(waktu),
-      }).timeout(Duration(seconds: 15));
+        'waktu': DateFormat('yyyy-MM-dd H:mm:ss').format(waktu),
+      };
+      print('DEBUG: Service - Request data: $requestData');
+
+      final response = await _dio
+          .post('/attendance/clock-in', data: requestData)
+          .timeout(Duration(seconds: 15));
+
+      print('DEBUG: Service - Response status: ${response.statusCode}');
+      print('DEBUG: Service - Response data: ${response.data}');
 
       if (response.data == null) {
         throw AttendanceException('Empty response from server');
@@ -63,15 +72,22 @@ class AttendanceService {
             'Invalid response format: missing attendance data');
       }
 
-      return AttendanceModel.fromJson(response.data['attendance']);
+      final attendanceData = response.data['attendance'];
+      print('DEBUG: Service - Parsing attendance data: $attendanceData');
+
+      return AttendanceModel.fromJson(attendanceData);
     } on DioException catch (e) {
+      print('DEBUG: Service - DioException in clockIn: ${e.message}');
+      print('DEBUG: Service - Status code: ${e.response?.statusCode}');
+      print('DEBUG: Service - Response data: ${e.response?.data}');
+
       String errorMessage = 'Clock-in failed';
 
       if (e.response?.statusCode == 401) {
         throw UnauthorizedException(
             e.response?.data['message'] ?? 'Unauthorized access');
       } else if (e.response?.statusCode == 422) {
-        // Handle validation errors
+        // Laravel validation errors
         if (e.response?.data['errors'] != null) {
           final errors = e.response?.data['errors'] as Map<String, dynamic>;
           final firstError = errors.values.first;
@@ -81,14 +97,16 @@ class AttendanceService {
           errorMessage = e.response?.data['message'] ?? 'Validation failed';
         }
         throw ValidationException(errorMessage);
-      } else if (e.response?.statusCode == 409) {
-        // Conflict - already clocked in
-        throw AttendanceException(
-            e.response?.data['message'] ?? 'Already clocked in today');
       } else if (e.response?.statusCode == 400) {
-        // Bad request - location issues, etc.
-        throw AttendanceException(
-            e.response?.data['message'] ?? 'Invalid request');
+        // Handle backend business rule errors (400 status)
+        final message = e.response?.data['message'] ?? 'Bad request';
+
+        // Check for Indonesian message from your backend
+        if (message.contains('sudah melakukan clock-in')) {
+          throw AttendanceException('Already clocked in today');
+        } else {
+          throw AttendanceException(message);
+        }
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
@@ -104,7 +122,9 @@ class AttendanceService {
       }
 
       throw AttendanceException('Clock-in failed: Network error');
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('DEBUG: Service - Unexpected error in clockIn: $e');
+      print('DEBUG: Service - Stack trace: $stackTrace');
       if (e is AttendanceException ||
           e is UnauthorizedException ||
           e is ValidationException ||
@@ -124,7 +144,7 @@ class AttendanceService {
       final response = await _dio.post('/attendance/clock-out', data: {
         'latitude': latitude,
         'longitude': longitude,
-        'waktu': DateFormat('yyyy-MM-dd HH:mm:ss').format(waktu),
+        'waktu': DateFormat('yyyy-MM-dd H:mm:ss').format(waktu),
       }).timeout(Duration(seconds: 15));
 
       if (response.data == null) {
@@ -144,6 +164,7 @@ class AttendanceService {
         throw UnauthorizedException(
             e.response?.data['message'] ?? 'Unauthorized access');
       } else if (e.response?.statusCode == 422) {
+        // Laravel validation errors
         if (e.response?.data['errors'] != null) {
           final errors = e.response?.data['errors'] as Map<String, dynamic>;
           final firstError = errors.values.first;
@@ -153,12 +174,17 @@ class AttendanceService {
           errorMessage = e.response?.data['message'] ?? 'Validation failed';
         }
         throw ValidationException(errorMessage);
-      } else if (e.response?.statusCode == 409) {
-        throw AttendanceException(e.response?.data['message'] ??
-            'Already clocked out or no clock-in found');
       } else if (e.response?.statusCode == 400) {
-        throw AttendanceException(
-            e.response?.data['message'] ?? 'Invalid request');
+        final message = e.response?.data['message'] ?? 'Bad request';
+
+        if (message.contains('belum melakukan clock-in')) {
+          throw AttendanceException(
+              'You must clock in first before clocking out');
+        } else if (message.contains('sudah melakukan clock-out')) {
+          throw AttendanceException('You have already clocked out today');
+        } else {
+          throw AttendanceException(message);
+        }
       } else if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
@@ -191,32 +217,64 @@ class AttendanceService {
     int? limit,
   }) async {
     try {
-      Map<String, dynamic> queryParams = {};
-
-      if (startDate != null) {
-        queryParams['start_date'] = DateFormat('yyyy-MM-dd').format(startDate);
-      }
-      if (endDate != null) {
-        queryParams['end_date'] = DateFormat('yyyy-MM-dd').format(endDate);
-      }
-      if (limit != null) {
-        queryParams['limit'] = limit;
-      }
-
-      final response =
-          await _dio.get('/attendance/history', queryParameters: queryParams);
+      final response = await _dio.get('/attendances/list');
 
       if (response.data == null) {
         throw AttendanceException('Empty response from server');
       }
 
-      final List<dynamic> attendanceData =
-          response.data['data'] ?? response.data['attendance'] ?? [];
+      if (response.data['data'] == null) {
+        throw AttendanceException('Invalid response format: missing data');
+      }
 
-      return attendanceData
-          .map((json) => AttendanceModel.fromJson(json))
-          .toList();
+      final List<dynamic> attendanceData = response.data['data'];
+      print('DEBUG: Service - Got ${attendanceData.length} total records');
+
+      List<AttendanceModel> allRecords = attendanceData.map((json) {
+        try {
+          return AttendanceModel.fromJson(json);
+        } catch (e) {
+          print('Error parsing attendance record: $e');
+          print('Raw data: $json');
+          rethrow;
+        }
+      }).toList();
+
+      print(
+          'DEBUG: Service - Parsed ${allRecords.length} records successfully');
+
+      // ✅ Fix: Use direct date comparison (no timezone conversion)
+      if (startDate != null) {
+        final startDateString = DateFormat('yyyy-MM-dd').format(startDate);
+        allRecords = allRecords.where((record) {
+          final recordDateString =
+              DateFormat('yyyy-MM-dd').format(record.waktu);
+          return recordDateString.compareTo(startDateString) >= 0;
+        }).toList();
+        print(
+            'DEBUG: Service - After start date filter: ${allRecords.length} records');
+      }
+
+      if (endDate != null) {
+        final endDateString = DateFormat('yyyy-MM-dd').format(endDate);
+        allRecords = allRecords.where((record) {
+          final recordDateString =
+              DateFormat('yyyy-MM-dd').format(record.waktu);
+          return recordDateString.compareTo(endDateString) <= 0;
+        }).toList();
+        print(
+            'DEBUG: Service - After end date filter: ${allRecords.length} records');
+      }
+
+      if (limit != null && limit > 0) {
+        allRecords = allRecords.take(limit).toList();
+        print('DEBUG: Service - After limit: ${allRecords.length} records');
+      }
+
+      print('DEBUG: Service - Returning ${allRecords.length} records');
+      return allRecords;
     } on DioException catch (e) {
+      print('DEBUG: Service - DioException: ${e.message}');
       if (e.response?.statusCode == 401) {
         throw UnauthorizedException(
             e.response?.data['message'] ?? 'Unauthorized access');
@@ -229,7 +287,9 @@ class AttendanceService {
 
       throw AttendanceException(
           e.response?.data['message'] ?? 'Failed to get attendance history');
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('DEBUG: Service - Unexpected error: $e');
+      print('DEBUG: Service - Stack trace: $stackTrace');
       if (e is AttendanceException ||
           e is UnauthorizedException ||
           e is NetworkException) {
@@ -239,69 +299,67 @@ class AttendanceService {
     }
   }
 
-  Future<AttendanceModel?> getTodayAttendance() async {
+  Future<List<AttendanceModel>> getTodayAttendanceRecords() async {
     try {
-      final response = await _dio.get('/attendance/today');
+      print('DEBUG: Service - Getting today\'s attendance records...');
+      final response = await _dio.get('/attendances/list');
+      print('DEBUG: Service - Response status: ${response.statusCode}');
 
-      if (response.data == null) {
-        return null;
+      if (response.data == null || response.data['data'] == null) {
+        print('DEBUG: Service - Empty response data');
+        return [];
       }
 
-      if (response.data['attendance'] == null) {
-        return null;
-      }
+      final List<dynamic> allRecords = response.data['data'];
+      print('DEBUG: Service - Got ${allRecords.length} total records');
 
-      return AttendanceModel.fromJson(response.data['attendance']);
+      // ✅ Fix: Use simple date string comparison (no timezone conversion)
+      final now = DateTime.now();
+      final todayDateString = DateFormat('yyyy-MM-dd').format(now);
+
+      print('DEBUG: Service - Today date string: $todayDateString');
+      print('DEBUG: Service - Current time: $now');
+
+      final todayRecords = allRecords.where((recordData) {
+        try {
+          final record = AttendanceModel.fromJson(recordData);
+
+          // ✅ Fix: Just compare date strings directly (no timezone conversion)
+          final recordDateString =
+              DateFormat('yyyy-MM-dd').format(record.waktu);
+
+          bool isToday = recordDateString == todayDateString;
+
+          print('DEBUG: Record ${record.id} (${record.type})');
+          print('  Stored time: ${record.waktu}');
+          print('  Record date: $recordDateString');
+          print('  Today date: $todayDateString');
+          print('  Is today: $isToday');
+
+          return isToday;
+        } catch (e) {
+          print('DEBUG: Error parsing attendance record: $e');
+          print('DEBUG: Raw record data: $recordData');
+          return false;
+        }
+      }).toList();
+
+      final result = todayRecords
+          .map((record) => AttendanceModel.fromJson(record))
+          .toList();
+      print('DEBUG: Service - Returning ${result.length} today records');
+      return result;
     } on DioException catch (e) {
+      print('DEBUG: Service - DioException: ${e.message}');
+      print('DEBUG: Service - Response: ${e.response?.data}');
       if (e.response?.statusCode == 401) {
-        throw UnauthorizedException(
-            e.response?.data['message'] ?? 'Unauthorized access');
-      } else if (e.response?.statusCode == 404) {
-        return null;
-      } else if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout');
-      } else if (e.type == DioExceptionType.connectionError) {
-        throw NetworkException('Unable to connect to server');
+        throw UnauthorizedException('Session expired');
       }
-
-      throw AttendanceException(
-          e.response?.data['message'] ?? 'Failed to get today\'s attendance');
-    } catch (e) {
-      if (e is AttendanceException ||
-          e is UnauthorizedException ||
-          e is NetworkException) {
-        rethrow;
-      }
-      throw AttendanceException('Failed to get today\'s attendance: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> getAttendanceStatus() async {
-    try {
-      final response = await _dio.get('/attendance/status');
-
-      return response.data ?? {};
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw UnauthorizedException(
-            e.response?.data['message'] ?? 'Unauthorized access');
-      } else if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
-        throw NetworkException('Connection timeout');
-      } else if (e.type == DioExceptionType.connectionError) {
-        throw NetworkException('Unable to connect to server');
-      }
-
-      throw AttendanceException(
-          e.response?.data['message'] ?? 'Failed to get attendance status');
-    } catch (e) {
-      if (e is AttendanceException ||
-          e is UnauthorizedException ||
-          e is NetworkException) {
-        rethrow;
-      }
-      throw AttendanceException('Failed to get attendance status: $e');
+      throw NetworkException('Failed to get today\'s records');
+    } catch (e, stackTrace) {
+      print('DEBUG: Service - Unexpected error: $e');
+      print('DEBUG: Service - Stack trace: $stackTrace');
+      throw AttendanceException('Failed to get today\'s records: $e');
     }
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -13,8 +12,6 @@ import 'package:go_router/go_router.dart';
 import 'dart:async';
 
 import '../controller/home_controller.dart';
-
-// import '../controller/home_controller.dart';
 
 class HomeBody extends StatefulWidget {
   const HomeBody({super.key});
@@ -61,9 +58,14 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   // Sample user data
-  final String userName = "sawaw";
 
+  String userName = '';
   String selectedMonth = DateFormat('MMM').format(DateTime.now()).toUpperCase();
+
+  String? clockInTime;
+  String? clockOutTime;
+  String workingHours = '00:00:00';
+  Timer? _workingHoursTimer;
 
   bool isClockedIn = false;
   bool isClockedOut = true;
@@ -75,6 +77,8 @@ class _HomeBodyState extends State<HomeBody> {
   int absentCount = 30;
   int lateInCount = 27;
 
+  final DateFormat timeFormat = DateFormat('hh:mm a');
+  final DateFormat dateFormat = DateFormat('EEEE dd MMMM yyyy');
   Timer? _timer;
   DateTime _currentTime = DateTime.now();
 
@@ -84,11 +88,21 @@ class _HomeBodyState extends State<HomeBody> {
   void initState() {
     super.initState();
     _initializeLocation();
+    _loadUserProfile();
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
         _currentTime = DateTime.now();
       });
     });
+  }
+
+    void _loadUserProfile() async {
+    final result = await homeController.loadProfile();
+    if (result['success'] == true && result['profile'] != null) {
+      setState(() {
+        userName = result['profile']['name'] ?? 'User';
+      });
+    }
   }
 
   void _initializeLocation() async {
@@ -100,7 +114,30 @@ class _HomeBodyState extends State<HomeBody> {
   @override
   void dispose() {
     _timer?.cancel();
+    _workingHoursTimer?.cancel();
     super.dispose();
+  }
+
+  void _updateWorkingHours() {
+    if (clockInTime == null) return;
+
+    final clockIn = DateTime.parse(clockInTime!);
+    final now =
+        clockOutTime != null ? DateTime.parse(clockOutTime!) : DateTime.now();
+
+    final difference = now.difference(clockIn);
+
+    setState(() {
+      workingHours = _formatDuration(difference);
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String hours = twoDigits(duration.inHours);
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$hours:$minutes:$seconds";
   }
 
   // Menampilkan dialog pilihan metode clock in/out dengan dua opsi tombol:
@@ -218,6 +255,7 @@ class _HomeBodyState extends State<HomeBody> {
 
   // Menampilkan dialog konfirmasi sukses clock in
   void _showSuccessClockInDialog() {
+    final now = DateTime.now();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -253,7 +291,7 @@ class _HomeBodyState extends State<HomeBody> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'You have successfully clocked in at\n08:00 AM on Monday 16 June 2025.\nHave a good day and have a productive\nday!',
+                  'You have successfully clocked in at\n${timeFormat.format(now)} on ${dateFormat.format(now)}.\nHave a good day and have a productive\nday!',
                   style: GoogleFonts.roboto(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -293,6 +331,7 @@ class _HomeBodyState extends State<HomeBody> {
 
   // Menampilkan dialog konfirmasi sukses clock out
   void _showSuccessClockOutDialog() {
+    final now = DateTime.now();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -331,7 +370,7 @@ class _HomeBodyState extends State<HomeBody> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'You have successfully clocked out at\n04:00 PM on Monday 16 June 2025.\nThank you for your hard work today!',
+                  'You have successfully clocked out at\n${timeFormat.format(now)} on ${dateFormat.format(now)}.\nThank you for your hard work today!',
                   style: GoogleFonts.roboto(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -642,9 +681,19 @@ class _HomeBodyState extends State<HomeBody> {
                               if (!isClockedIn) {
                                 isClockedIn = true;
                                 isClockedOut = false;
+                                clockInTime = now.toIso8601String();
+
+                                // Start timer for working hours
+                                _workingHoursTimer = Timer.periodic(
+                                    Duration(seconds: 1), (timer) {
+                                  _updateWorkingHours();
+                                });
                               } else {
                                 isClockedIn = false;
                                 isClockedOut = true;
+                                clockOutTime = now.toIso8601String();
+                                _workingHoursTimer?.cancel();
+                                _updateWorkingHours();
                               }
                             });
 
@@ -1200,25 +1249,32 @@ class _HomeBodyState extends State<HomeBody> {
                               const SizedBox(height: 20),
 
                               // Time status icons
+                              // Replace the existing time status cards section
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   _buildTimeStatusCard(
                                     imagePath: 'assets/icon/Clock_fill.svg',
-                                    time: '08:00 AM',
+                                    time: clockInTime != null
+                                        ? DateFormat('hh:mm a').format(
+                                            DateTime.parse(clockInTime!))
+                                        : '--:--',
                                     label: 'Clock In',
                                     screenWidth: screenWidth,
                                   ),
                                   _buildTimeStatusCard(
                                     imagePath: 'assets/icon/Clock_fill.svg',
-                                    time: '04:00 PM',
+                                    time: clockOutTime != null
+                                        ? DateFormat('hh:mm a').format(
+                                            DateTime.parse(clockOutTime!))
+                                        : '--:--',
                                     label: 'Clock Out',
                                     screenWidth: screenWidth,
                                   ),
                                   _buildTimeStatusCard(
                                     imagePath: 'assets/icon/Clock_fill.svg',
-                                    time: '00:00:00',
+                                    time: workingHours,
                                     label: 'Working Hrs',
                                     screenWidth: screenWidth,
                                   ),
