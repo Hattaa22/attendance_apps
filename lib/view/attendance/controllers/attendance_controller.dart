@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart';
 import '../../../core/data/repositories/attendance_repository.dart';
 
 class AttendanceController extends GetxController {
@@ -23,7 +23,7 @@ class AttendanceController extends GetxController {
         endDate: endDate,
         limit: limit,
       );
-      print('Attendance result: $result'); // Tambahkan ini
+      // print('Attendance result: $result'); // Tambahkan ini
       if (result['success'] == true) {
         attendanceHistory.value = result['attendance'] ?? [];
         statistics.value = result['statistics'] ?? {};
