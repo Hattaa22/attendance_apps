@@ -85,6 +85,15 @@ class _AttendancePageState extends State<AttendancePage> {
     return list;
   }
 
+  void _showAttendanceDetailsModal(Map<String, dynamic> record) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _buildAttendanceDetailsModal(record),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -224,48 +233,52 @@ class _AttendancePageState extends State<AttendancePage> {
         elevation: 1,
         color: whiteMainColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: blueMainColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      formattedDate,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: deepNavyMainColor,
+        child: InkWell(
+          onTap: () => _showAttendanceDetailsModal(record),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: blueMainColor,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTimeInfo('Clock In', clockIn, greenMainColor),
-                  ),
-                  Expanded(
-                    child: _buildTimeInfo('Clock Out', clockOut, Colors.red),
-                  ),
-                  Expanded(
-                    child: _buildTimeInfo('Working HR\'s', workingHours, Colors.orange),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        formattedDate,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: deepNavyMainColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTimeInfo('Clock In', clockIn, greenMainColor),
+                    ),
+                    Expanded(
+                      child: _buildTimeInfo('Clock Out', clockOut, Colors.red),
+                    ),
+                    Expanded(
+                      child: _buildTimeInfo('Working HR\'s', workingHours, Colors.orange),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -292,6 +305,113 @@ class _AttendancePageState extends State<AttendancePage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAttendanceDetailsModal(Map<String, dynamic> record) {
+    final date = record['date'] as DateTime?;
+    final formattedDate = date != null
+        ? DateFormat('EEE, MMM d, yyyy').format(date)
+        : '-';
+
+    final clockIn = record['clock_in'] ?? '-';
+    final clockOut = record['clock_out'] ?? '-';
+    final workingHours = (record['raw_clock_in'] != null && record['raw_clock_out'] != null)
+        ? (() {
+            try {
+              final inTime = DateTime.parse(record['raw_clock_in']);
+              final outTime = DateTime.parse(record['raw_clock_out']);
+              final diff = outTime.difference(inTime);
+              final hours = diff.inHours.toString().padLeft(2, '0');
+              final minutes = (diff.inMinutes % 60).toString().padLeft(2, '0');
+              final seconds = (diff.inSeconds % 60).toString().padLeft(2, '0');
+              return '$hours:$minutes:$seconds';
+            } catch (_) {
+              return '-';
+            }
+          })()
+        : '-';
+
+    final lateDuration = record['late_duration']?.toString() ?? '-';
+    final overtimeDuration = record['overtime_duration']?.toString() ?? '-';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        color: whiteMainColor,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Center(
+            child: Text(
+              'Attendance details',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: deepNavyMainColor,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildDetailRow('Present date', formattedDate),
+          _buildDetailRow('Clock in', clockIn),
+          _buildDetailRow('Clock Out', clockOut),
+          _buildDetailRow('Working HRs', workingHours),
+          _buildDetailRow('Late', lateDuration),
+          _buildDetailRow('Overtime', overtimeDuration),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: blueMainColor,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Okay',
+                style: TextStyle(
+                  color: whiteMainColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '$label :',
+            style: const TextStyle(
+              fontSize: 14,
+              color: greyNavColor,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: deepNavyMainColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
