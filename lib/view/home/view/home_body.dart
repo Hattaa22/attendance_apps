@@ -5,49 +5,60 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../controller/home_controller.dart';
 
 import 'dart:async';
 
-class HomeBody extends StatefulWidget {
+class HomeBody extends StatelessWidget {
   const HomeBody({super.key});
 
   @override
-  State<HomeBody> createState() => _HomeBodyState();
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => HomeController(),
+        ),
+        // Tambahkan provider lain di sini jika perlu
+      ],
+      child: const _HomeBodyContent(),
+    );
+  }
 }
 
-class _HomeBodyState extends State<HomeBody> {
-  // Sample user data
+class _HomeBodyContent extends StatefulWidget {
+  const _HomeBodyContent();
+
+  @override
+  State<_HomeBodyContent> createState() => _HomeBodyContentState();
+}
+
+class _HomeBodyContentState extends State<_HomeBodyContent> {
   final String userName = "sawaw";
   final String location = "Malang, East Java";
 
+  int selectedYear = DateTime.now().year;
+  int selectedMonthIndex = DateTime.now().month;
   String selectedMonth = DateFormat('MMM').format(DateTime.now()).toUpperCase();
 
   bool isClockedIn = false;
   bool isClockedOut = true;
-
   bool isReminderActive = false;
-
-  // Attendance statistics
-  int presentsCount = 17;
-  int absentCount = 30;
-  int lateInCount = 27;
 
   Timer? _timer;
   DateTime _currentTime = DateTime.now();
 
   @override
-
-  // Membuat timer yang berjalan terus - menerus perdetik
   void initState() {
     super.initState();
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _currentTime = DateTime.now();
       });
     });
   }
 
-  // Membatalkan timer saat widget dihapus agar tidak terus berjalan di background
   @override
   void dispose() {
     _timer?.cancel();
@@ -605,119 +616,133 @@ class _HomeBodyState extends State<HomeBody> {
 
   // Menampilkan dialog pemilihan bulan dengan navigasi tahun
   void _showMonthSelectionDialog() {
+    final mainContext = context; // Simpan context utama
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.5),
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        int tempYear = selectedYear;
+        int tempMonth = selectedMonthIndex;
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back_ios, size: 18),
-                      onPressed: () {
-                        // Logic untuk tahun sebelumnya
-                      },
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_ios, size: 18),
+                          onPressed: () {
+                            setStateDialog(() {
+                              tempYear--;
+                            });
+                          },
+                        ),
+                        Text(
+                          '$tempYear',
+                          style: GoogleFonts.roboto(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_forward_ios, size: 18),
+                          onPressed: () {
+                            setStateDialog(() {
+                              tempYear++;
+                            });
+                          },
+                        ),
+                      ],
                     ),
-                    Text(
-                      '2025',
-                      style: GoogleFonts.roboto(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(height: 20),
+                    GridView.count(
+                      shrinkWrap: true,
+                      crossAxisCount: 3,
+                      childAspectRatio: 2.5,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      children: List.generate(12, (i) {
+                        final monthName = DateFormat('MMM')
+                            .format(DateTime(0, i + 1))
+                            .toUpperCase();
+                        final isSelected = tempMonth == i + 1;
+                        return ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                isSelected ? blueMainColor : Colors.grey[100],
+                            foregroundColor:
+                                isSelected ? Colors.white : Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: () {
+                            setStateDialog(() {
+                              tempMonth = i + 1;
+                            });
+                          },
+                          child: Text(
+                            monthName,
+                            style: GoogleFonts.roboto(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: blueMainColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            selectedYear = tempYear;
+                            selectedMonthIndex = tempMonth;
+                            selectedMonth = DateFormat('MMM')
+                                .format(DateTime(0, selectedMonthIndex))
+                                .toUpperCase();
+                          });
+                          // Gunakan mainContext, bukan context dialog!
+                          Provider.of<HomeController>(mainContext,
+                                  listen: false)
+                              .changeMonth(selectedYear, selectedMonthIndex);
+                          Navigator.of(context, rootNavigator: true).pop();
+                        },
+                        child: Text(
+                          'Apply',
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.arrow_forward_ios, size: 18),
-                      onPressed: () {
-                        // Logic untuk tahun selanjutnya
-                      },
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                GridView.count(
-                  shrinkWrap: true,
-                  crossAxisCount: 3,
-                  childAspectRatio: 2.5,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  children: [
-                    _buildMonthButton('Jan', false),
-                    _buildMonthButton('Feb', false),
-                    _buildMonthButton('Mar', false),
-                    _buildMonthButton('Apr', false),
-                    _buildMonthButton('May', false),
-                    _buildMonthButton('Jun', true),
-                    _buildMonthButton('Jul', false),
-                    _buildMonthButton('Aug', false),
-                    _buildMonthButton('Sep', false),
-                    _buildMonthButton('Oct', false),
-                    _buildMonthButton('Nov', false),
-                    _buildMonthButton('Dec', false),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: blueMainColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      'Apply',
-                      style: GoogleFonts.roboto(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
-    );
-  }
-
-  // Membuat tombol bulan dengan style berbeda jika dipilih atau tidak
-  Widget _buildMonthButton(String month, bool isSelected) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? blueMainColor : Colors.grey[100],
-        foregroundColor: isSelected ? Colors.white : Colors.black,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        elevation: 0,
-      ),
-      onPressed: () {
-        // Logic untuk memilih bulan
-      },
-      child: Text(
-        month,
-        style: GoogleFonts.roboto(
-          fontWeight: FontWeight.w500,
-        ),
-      ),
     );
   }
 
@@ -796,8 +821,8 @@ class _HomeBodyState extends State<HomeBody> {
                         width: 35,
                         height: 35,
                         child: SvgPicture.asset(
-                            'assets/icon/Bell_pin_fill.svg',
-                            fit: BoxFit.contain,
+                          'assets/icon/Bell_pin_fill.svg',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
@@ -848,12 +873,8 @@ class _HomeBodyState extends State<HomeBody> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              SvgPicture.asset(
-                                'assets/icon/Alarm_clock.svg',
-                                width: 15,
-                                height: 15,
-                                fit: BoxFit.contain
-                              ),
+                              SvgPicture.asset('assets/icon/Alarm_clock.svg',
+                                  width: 15, height: 15, fit: BoxFit.contain),
                               const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
@@ -964,29 +985,88 @@ class _HomeBodyState extends State<HomeBody> {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: _buildAttendanceCard(
-                                          'Presents',
-                                          presentsCount.toString(),
-                                          const Color(0xFF34C759), // Green
-                                          screenWidth,
+                                        child: Consumer<HomeController>(
+                                          builder: (context, controller, _) {
+                                            // Pastikan data di-refresh jika bulan/tahun berubah
+                                            WidgetsBinding.instance
+                                                .addPostFrameCallback((_) {
+                                              if (controller.selectedYear !=
+                                                      selectedYear ||
+                                                  controller.selectedMonth !=
+                                                      selectedMonthIndex) {
+                                                controller.changeMonth(
+                                                    selectedYear,
+                                                    selectedMonthIndex);
+                                              }
+                                            });
+                                            final stat = controller.stat;
+                                            return _buildAttendanceCard(
+                                              'Presents',
+                                              controller.isLoading
+                                                  ? '-'
+                                                  : (stat?.presents
+                                                          .toString() ??
+                                                      '-'),
+                                              const Color(0xFF34C759), // Green
+                                              screenWidth,
+                                            );
+                                          },
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
-                                        child: _buildAttendanceCard(
-                                          'Absent',
-                                          absentCount.toString(),
-                                          const Color(0xFFFF3B30), // Red
-                                          screenWidth,
+                                        child: Consumer<HomeController>(
+                                          builder: (context, controller, _) {
+                                            WidgetsBinding.instance
+                                                .addPostFrameCallback((_) {
+                                              if (controller.selectedYear !=
+                                                      selectedYear ||
+                                                  controller.selectedMonth !=
+                                                      selectedMonthIndex) {
+                                                controller.changeMonth(
+                                                    selectedYear,
+                                                    selectedMonthIndex);
+                                              }
+                                            });
+                                            final stat = controller.stat;
+                                            return _buildAttendanceCard(
+                                              'Absent',
+                                              controller.isLoading
+                                                  ? '-'
+                                                  : (stat?.absent.toString() ??
+                                                      '-'),
+                                              const Color(0xFFFF3B30), // Red
+                                              screenWidth,
+                                            );
+                                          },
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
-                                        child: _buildAttendanceCard(
-                                          'Late In',
-                                          lateInCount.toString(),
-                                          const Color(0xFFFF9500), // Orange
-                                          screenWidth,
+                                        child: Consumer<HomeController>(
+                                          builder: (context, controller, _) {
+                                            WidgetsBinding.instance
+                                                .addPostFrameCallback((_) {
+                                              if (controller.selectedYear !=
+                                                      selectedYear ||
+                                                  controller.selectedMonth !=
+                                                      selectedMonthIndex) {
+                                                controller.changeMonth(
+                                                    selectedYear,
+                                                    selectedMonthIndex);
+                                              }
+                                            });
+                                            final stat = controller.stat;
+                                            return _buildAttendanceCard(
+                                              'Late In',
+                                              controller.isLoading
+                                                  ? '-'
+                                                  : (stat?.lateIn.toString() ??
+                                                      '-'),
+                                              const Color(0xFFFF9500), // Orange
+                                              screenWidth,
+                                            );
+                                          },
                                         ),
                                       ),
                                     ],
@@ -1193,7 +1273,7 @@ class _HomeBodyState extends State<HomeBody> {
   Widget _buildAttendanceCard(
       String title, String count, Color color, double screenWidth) {
     return Container(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         right: 10,
         left: 10,
         bottom: 8,

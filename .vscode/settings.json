@@ -1,5 +1,6 @@
 {
   "dart.flutterSdkPath": ".fvm/versions/3.24.5",
   "java.configuration.updateBuildConfiguration": "interactive",
-  "cmake.sourceDirectory": "C:/Users/Diantoro/Documents/MAGANG INATECH/attendance_apps/linux"
+  "cmake.sourceDirectory": "C:/Users/Diantoro/Documents/MAGANG INATECH/attendance_apps/linux",
+  "postman.settings.dotenv-detection-notification-visibility": false
 }
