@@ -1,0 +1,2 @@
+C:/Users/Diantoro/Documents/MAGANG INATECH/attendance_apps/android/app/.cxx/Debug/566m5j17/x86/CMakeFiles/edit_cache.dir
+C:/Users/Diantoro/Documents/MAGANG INATECH/attendance_apps/android/app/.cxx/Debug/566m5j17/x86/CMakeFiles/rebuild_cache.dir
