@@ -15,8 +15,8 @@ class AttendanceModel {
     return AttendanceModel(
       type: json['type'],
       waktu: DateTime.parse(json['waktu']),
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+      latitude: double.tryParse(json['latitude'].toString()) ?? 0.0,
+      longitude: double.tryParse(json['longitude'].toString()) ?? 0.0,
     );
   }
 

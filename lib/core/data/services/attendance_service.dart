@@ -48,7 +48,7 @@ class AttendanceService {
     required DateTime waktu,
   }) async {
     try {
-      final response = await _dio.post('/attendance/clock-in', data: {
+      final response = await _dio.post('/attendances/clock-in', data: {
         'latitude': latitude,
         'longitude': longitude,
         'waktu': DateFormat('yyyy-MM-dd HH:mm:ss').format(waktu),
@@ -121,7 +121,7 @@ class AttendanceService {
     required DateTime waktu,
   }) async {
     try {
-      final response = await _dio.post('/attendance/clock-out', data: {
+      final response = await _dio.post('/attendances/clock-out', data: {
         'latitude': latitude,
         'longitude': longitude,
         'waktu': DateFormat('yyyy-MM-dd HH:mm:ss').format(waktu),
@@ -204,7 +204,7 @@ class AttendanceService {
       }
 
       final response =
-          await _dio.get('/attendance/history', queryParameters: queryParams);
+          await _dio.get('/attendances/list', queryParameters: queryParams);
 
       if (response.data == null) {
         throw AttendanceException('Empty response from server');
@@ -241,7 +241,7 @@ class AttendanceService {
 
   Future<AttendanceModel?> getTodayAttendance() async {
     try {
-      final response = await _dio.get('/attendance/today');
+      final response = await _dio.get('/attendances/today');
 
       if (response.data == null) {
         return null;
@@ -279,7 +279,7 @@ class AttendanceService {
 
   Future<Map<String, dynamic>> getAttendanceStatus() async {
     try {
-      final response = await _dio.get('/attendance/status');
+      final response = await _dio.get('/attendances/status');
 
       return response.data ?? {};
     } on DioException catch (e) {

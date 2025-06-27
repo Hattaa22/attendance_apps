@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:fortis_apps/core/navigation/navigation.dart';
 import 'package:fortis_apps/core/color/colors.dart';
+import 'package:get/get.dart';
+import 'package:fortis_apps/view/attendance/controllers/attendance_controller.dart';
+import 'package:intl/intl.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -11,131 +13,18 @@ class AttendancePage extends StatefulWidget {
 }
 
 class _AttendancePageState extends State<AttendancePage> {
-  int selectedYear = 2025;
-  int selectedMonth = 4; // April
+  final AttendanceController attendanceController = Get.put(AttendanceController());
 
-  final List<AttendanceRecord> allAttendanceRecords = [
-    AttendanceRecord(
-      date: 'Sat, Apr 10, 2025',
-      checkIn: '',
-      checkOut: '',
-      workingHours: '',
-      status: 'Leave',
-      month: 4,
-      year: 2025,
-    ),
-    AttendanceRecord(
-      date: 'Fri, Apr 9, 2025',
-      checkIn: '10:30 AM',
-      checkOut: '04:00 PM',
-      workingHours: '05:30:00',
-      status: 'present',
-      isToday: true,
-      overtime: '00:00',
-      late: '00:00',
-      leavingEarly: '00:00',
-      totalWork: '00:00',
-      totalRest: '00:00',
-      month: 4,
-      year: 2025,
-    ),
-    AttendanceRecord(
-      date: 'Thu, Apr 8, 2025',
-      checkIn: '10:30 AM',
-      checkOut: '04:00 PM',
-      workingHours: '05:30:00',
-      status: 'present',
-      isToday: true,
-      overtime: '00:00',
-      late: '00:00',
-      leavingEarly: '00:00',
-      totalWork: '00:00',
-      totalRest: '00:00',
-      month: 4,
-      year: 2025,
-    ),
-    AttendanceRecord(
-      date: 'Wed, Apr 7, 2025',
-      checkIn: '10:30 AM',
-      checkOut: '04:00 PM',
-      workingHours: '05:30:00',
-      status: 'present',
-      isToday: true,
-      overtime: '00:00',
-      late: '00:00',
-      leavingEarly: '00:00',
-      totalWork: '00:00',
-      totalRest: '00:00',
-      month: 4,
-      year: 2025,
-    ),
-    AttendanceRecord(
-      date: 'Fri, Mar 10, 2025',
-      checkIn: '08:00 AM',
-      checkOut: '04:00 PM',
-      workingHours: '08:00:00',
-      status: 'Leave',
-      month: 3,
-      year: 2025,
-    ),
-    AttendanceRecord(
-      date: 'Thu, Mar 11, 2025',
-      checkIn: '10:30 AM',
-      checkOut: '04:00 PM',
-      workingHours: '05:30:00',
-      status: 'present',
-      isToday: true,
-      overtime: '00:00',
-      late: '00:00',
-      leavingEarly: '00:00',
-      totalWork: '00:00',
-      totalRest: '00:00',
-      month: 3,
-      year: 2025,
-    ),
-    AttendanceRecord(
-      date: 'Wed, Mar 12, 2025',
-      checkIn: '8:30 AM',
-      checkOut: '02:00 PM',
-      workingHours: '05:30:00',
-      status: 'present',
-      month: 3,
-      year: 2025,
-    ),
-    AttendanceRecord(
-      date: 'Tue, Mar 13, 2025',
-      checkIn: '08:00 AM',
-      checkOut: '02:00 PM',
-      workingHours: '06:00:00',
-      status: 'Half day',
-      month: 3,
-      year: 2025,
-    ),
-    AttendanceRecord(
-      date: 'Mon, Mar 14, 2025',
-      checkIn: '08:00 AM',
-      checkOut: '02:00 PM',
-      workingHours: '06:00:00',
-      status: 'present',
-      month: 3,
-      year: 2025,
-    ),
-    // Add some February records for testing
-    AttendanceRecord(
-      date: 'Fri, Feb 28, 2025',
-      checkIn: '09:00 AM',
-      checkOut: '05:00 PM',
-      workingHours: '08:00:00',
-      status: 'present',
-      month: 2,
-      year: 2025,
-    ),
-  ];
+  int selectedMonth = DateTime.now().month;
+  int selectedYear = DateTime.now().year;
 
-  List<AttendanceRecord> get filteredAttendanceRecords {
-    return allAttendanceRecords
-        .where((record) => record.month == selectedMonth && record.year == selectedYear)
-        .toList();
+  @override
+  void initState() {
+    super.initState();
+    attendanceController.fetchAttendanceHistory(
+      startDate: DateTime(selectedYear, selectedMonth, 1),
+      endDate: DateTime(selectedYear, selectedMonth + 1, 0),
+    );
   }
 
   void _showMonthPicker() {
@@ -152,21 +41,48 @@ class _AttendancePageState extends State<AttendancePage> {
     );
   }
 
-  void _showAttendanceDetails(AttendanceRecord record) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => _buildAttendanceDetailsModal(record),
-    );
-  }
-
   String _getMonthName(int month) {
     const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      '', 'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
     ];
     return months[month];
+  }
+
+  /// Group records by date, and assign clock-in/clock-out per day
+  List<Map<String, dynamic>> groupAttendanceByDate(List records) {
+    final Map<String, Map<String, dynamic>> grouped = {};
+    for (var record in records) {
+      final waktuStr = record['waktu'];
+      if (waktuStr == null) continue;
+      final date = DateTime.tryParse(waktuStr);
+      if (date == null) continue;
+      final dateKey = DateFormat('yyyy-MM-dd').format(date);
+
+      grouped.putIfAbsent(dateKey, () => {
+        'date': date,
+        'clock_in': null,
+        'clock_out': null,
+        'late_duration': null,
+        'overtime_duration': null,
+        'raw_clock_in': null,
+        'raw_clock_out': null,
+      });
+
+      if (record['type'] == 'clock-in') {
+        grouped[dateKey]!['clock_in'] = DateFormat('HH:mm').format(date);
+        grouped[dateKey]!['raw_clock_in'] = waktuStr;
+        grouped[dateKey]!['late_duration'] = record['late_duration'];
+        grouped[dateKey]!['overtime_duration'] = record['overtime_duration'];
+      } else if (record['type'] == 'clock-out') {
+        grouped[dateKey]!['clock_out'] = DateFormat('HH:mm').format(date);
+        grouped[dateKey]!['raw_clock_out'] = waktuStr;
+      }
+    }
+    // Sort descending by date
+    final list = grouped.values.toList()
+      ..sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
+    return list;
   }
 
   @override
@@ -237,40 +153,77 @@ class _AttendancePageState extends State<AttendancePage> {
             ),
           ),
           Expanded(
-            child: filteredAttendanceRecords.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No attendance records found for this month',
-                      style: TextStyle(
-                        color: greyNavColor,
-                        fontSize: 16,
-                      ),
+            child: Obx(() {
+              if (attendanceController.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              // Filter data sesuai bulan & tahun
+              final records = attendanceController.attendanceHistory.where((record) {
+                final dateStr = record['waktu'];
+                if (dateStr == null || dateStr is! String || dateStr.isEmpty) return false;
+                final date = DateTime.tryParse(dateStr);
+                if (date == null) return false;
+                return date.month == selectedMonth && date.year == selectedYear;
+              }).toList();
+
+              final grouped = groupAttendanceByDate(records);
+
+              if (grouped.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No attendance records found for this month',
+                    style: TextStyle(
+                      color: greyNavColor,
+                      fontSize: 16,
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: filteredAttendanceRecords.length,
-                    itemBuilder: (context, index) {
-                      final record = filteredAttendanceRecords[index];
-                      return _buildAttendanceCard(record);
-                    },
                   ),
+                );
+              }
+
+              return ListView.builder(
+                itemCount: grouped.length,
+                itemBuilder: (context, index) {
+                  final record = grouped[index];
+                  return _buildAttendanceCard(record);
+                },
+              );
+            }),
           ),
         ],
       ),
-      // bottomNavigationBar: Navigation(),
     );
   }
 
-  Widget _buildAttendanceCard(AttendanceRecord record) {
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-    child: Card(
-      elevation: 1,
-      color: record.status == 'Leave' ? Colors.red.shade50 : whiteMainColor, // Background merah muda untuk Leave
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () => _showAttendanceDetails(record),
-        borderRadius: BorderRadius.circular(12),
+  Widget _buildAttendanceCard(Map<String, dynamic> record) {
+    final date = record['date'] as DateTime?;
+    final formattedDate = date != null
+        ? DateFormat('EEE, MMM d, yyyy').format(date)
+        : '-';
+
+    final clockIn = record['clock_in'] ?? '-';
+    final clockOut = record['clock_out'] ?? '-';
+
+    String workingHours = '-';
+    if (record['raw_clock_in'] != null && record['raw_clock_out'] != null) {
+      try {
+        final inTime = DateTime.parse(record['raw_clock_in']);
+        final outTime = DateTime.parse(record['raw_clock_out']);
+        final diff = outTime.difference(inTime);
+        final hours = diff.inHours.toString().padLeft(2, '0');
+        final minutes = (diff.inMinutes % 60).toString().padLeft(2, '0');
+        final seconds = (diff.inSeconds % 60).toString().padLeft(2, '0');
+        workingHours = '$hours:$minutes:$seconds';
+      } catch (_) {
+        workingHours = '-';
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Card(
+        elevation: 1,
+        color: whiteMainColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -281,96 +234,43 @@ class _AttendancePageState extends State<AttendancePage> {
                     width: 4,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: record.status == 'Leave' 
-                          ? Colors.red 
-                          : (record.isToday ? blueMainColor : greyNavColor),
+                      color: blueMainColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          record.date,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: record.status == 'Leave' 
-                                ? Colors.red.shade700 
-                                : deepNavyMainColor,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      formattedDate,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: deepNavyMainColor,
+                      ),
                     ),
                   ),
-                  // Status badge positioned on the right
-                  if (record.status == 'Leave') ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Leave',
-                        style: TextStyle(
-                          color: whiteMainColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ] else if (record.status == 'Half day') ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: greyNavColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Half day',
-                        style: TextStyle(
-                          color: whiteMainColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
-              // Show time info only for present status
-              if (record.status == 'present') ...[
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTimeInfo('Check In', record.checkIn, greenMainColor),
-                    ),
-                    Expanded(
-                      child: _buildTimeInfo('Check Out', record.checkOut, Colors.red),
-                    ),
-                    Expanded(
-                      child: _buildTimeInfo('Working HRs', record.workingHours, Colors.orange),
-                    ),
-                  ],
-                ),
-              ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTimeInfo('Clock In', clockIn, greenMainColor),
+                  ),
+                  Expanded(
+                    child: _buildTimeInfo('Clock Out', clockOut, Colors.red),
+                  ),
+                  Expanded(
+                    child: _buildTimeInfo('Working HR\'s', workingHours, Colors.orange),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildTimeInfo(String label, String time, Color color) {
     return Column(
@@ -416,6 +316,10 @@ class _AttendancePageState extends State<AttendancePage> {
                     selectedYear = newYear;
                     selectedMonth = newMonth;
                   });
+                  attendanceController.fetchAttendanceHistory(
+                    startDate: DateTime(selectedYear, selectedMonth, 1),
+                    endDate: DateTime(selectedYear, selectedMonth + 1, 0),
+                  );
                 },
                 icon: const Icon(Icons.chevron_left, color: deepNavyMainColor),
               ),
@@ -439,6 +343,10 @@ class _AttendancePageState extends State<AttendancePage> {
                     selectedYear = newYear;
                     selectedMonth = newMonth;
                   });
+                  attendanceController.fetchAttendanceHistory(
+                    startDate: DateTime(selectedYear, selectedMonth, 1),
+                    endDate: DateTime(selectedYear, selectedMonth + 1, 0),
+                  );
                 },
                 icon: const Icon(Icons.chevron_right, color: deepNavyMainColor),
               ),
@@ -458,7 +366,7 @@ class _AttendancePageState extends State<AttendancePage> {
               int index = entry.key + 1;
               String month = entry.value;
               bool isSelected = index == selectedMonth;
-              
+
               return GestureDetector(
                 onTap: () {
                   setState(() {
@@ -489,7 +397,10 @@ class _AttendancePageState extends State<AttendancePage> {
             child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Refresh the list after closing the modal
+                attendanceController.fetchAttendanceHistory(
+                  startDate: DateTime(selectedYear, selectedMonth, 1),
+                  endDate: DateTime(selectedYear, selectedMonth + 1, 0),
+                );
                 setState(() {});
               },
               style: ElevatedButton.styleFrom(
@@ -513,121 +424,4 @@ class _AttendancePageState extends State<AttendancePage> {
       ),
     );
   }
-
-  Widget _buildAttendanceDetailsModal(AttendanceRecord record) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: whiteMainColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Center(
-            child: Text(
-              'Attendance details',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: deepNavyMainColor,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          _buildDetailRow('Present date', record.date),
-          _buildDetailRow('Status', record.status),
-          _buildDetailRow('Overtime', record.overtime),
-          _buildDetailRow('Clock in', record.checkIn.isNotEmpty ? record.checkIn : '-'),
-          _buildDetailRow('Clock Out', record.checkOut.isNotEmpty ? record.checkOut : '-'),
-          _buildDetailRow('Late', record.late),
-          _buildDetailRow('Leaving early', record.leavingEarly),
-          _buildDetailRow('Total work', record.totalWork),
-          _buildDetailRow('Total rest', record.totalRest),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: blueMainColor,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Okay',
-                style: TextStyle(
-                  color: whiteMainColor,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '$label :',
-            style: const TextStyle(
-              fontSize: 14,
-              color: greyNavColor,
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: deepNavyMainColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Data Model
-class AttendanceRecord {
-  final String date;
-  final String checkIn;
-  final String checkOut;
-  final String workingHours;
-  final String status;
-  final bool isToday;
-  final String overtime;
-  final String late;
-  final String leavingEarly;
-  final String totalWork;
-  final String totalRest;
-  final int month;
-  final int year;
-
-  AttendanceRecord({
-    required this.date,
-    required this.checkIn,
-    required this.checkOut,
-    required this.workingHours,
-    required this.status,
-    required this.month,
-    required this.year,
-    this.isToday = false,
-    this.overtime = '00:00',
-    this.late = '00:00',
-    this.leavingEarly = '00:00',
-    this.totalWork = '00:00',
-    this.totalRest = '00:00',
-  });
 }
