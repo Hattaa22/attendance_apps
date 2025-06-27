@@ -100,7 +100,7 @@ class ProfileDetailCard extends StatelessWidget {
                 _buildDivider(),
                 _buildDetailRow('Email ID', controller.email),
                 _buildDivider(),
-                _buildDetailRow('Phone Number', controller.phoneNumber),
+                _buildDetailRow('Department', controller.department),
               ],
             ],
           ),
@@ -143,7 +143,7 @@ class ProfileDetailCard extends StatelessWidget {
             label,
             style: const TextStyle(
               fontFamily: 'Inter',
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: FontWeight.w400,
               height: 1.2,
               letterSpacing: 0.2,
@@ -156,7 +156,7 @@ class ProfileDetailCard extends StatelessWidget {
                   builder: (context) {
                     final textStyle = const TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       height: 1.4,
                       color: Colors.black,
@@ -209,7 +209,7 @@ class ProfileDetailCard extends StatelessWidget {
                     value,
                     style: const TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       height: 1.2,
                       color: Colors.black,

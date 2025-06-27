@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'addleave.dart';
+import 'package:fortis_apps/core/data/models/leave_model.dart';
+import 'package:fortis_apps/core/data/repositories/leave_repository.dart';
+import 'package:fortis_apps/view/leave/view/addleave.dart';
+import 'package:intl/intl.dart';
 
 class LeavePage extends StatefulWidget {
   const LeavePage({super.key});
@@ -9,113 +12,106 @@ class LeavePage extends StatefulWidget {
 }
 
 class _LeavePageState extends State<LeavePage> {
+  final LeaveRepository _leaveRepo = LeaveRepositoryImpl();
   int selectedTabIndex = 0;
   List<String> tabs = ['All', 'Approved', 'Pending', 'Rejected'];
-  
-  // Leave statistics
-  int totalLeave = 30;
-  int availableLeave = 24;
-  int appliedLeave = 27;
-  int approvedLeave = 17;
-  int pendingLeave = 27;
-  int rejectedLeave = 30;
-  
-  // Leave applications data
-  List<LeaveApplication> leaveApplications = [];
-  List<LeaveApplication> filteredApplications = [];
+
+  // State variables
+  List<LeaveModel> _allLeaves = [];
+  List<LeaveModel> _filteredLeaves = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  // Statistics
+  int _totalLeaves = 0;
+  int _pendingLeaves = 0;
+  int _approvedLeaves = 0;
+  int _rejectedLeaves = 0;
+  int _availableLeave = 24;
 
   @override
   void initState() {
     super.initState();
-    _initializeLeaveData();
-    _updateFilteredApplications();
+    _loadLeaveData();
   }
 
-  void _initializeLeaveData() {
-    leaveApplications = [
-      LeaveApplication(
-        date: 'Apr 1, 2025',
-        leaveType: 'Sick leave',
-        appliedDays: '1 Day',
-        approvedBy: 'Manager',
-        status: LeaveStatus.pending,
-      ),
-      LeaveApplication(
-        date: 'Feb 25, 2025',
-        leaveType: 'Sick leave',
-        appliedDays: '3 Day',
-        approvedBy: 'Manager',
-        status: LeaveStatus.approved,
-      ),
-      LeaveApplication(
-        date: 'January 10, 2025',
-        leaveType: 'Paid leave',
-        appliedDays: '2 Day',
-        approvedBy: 'Manager',
-        status: LeaveStatus.rejected,
-      ),
-    ];
-  }
+  Future<void> _loadLeaveData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-  void _updateFilteredApplications() {
-    if (selectedTabIndex == 0) {
-      filteredApplications = leaveApplications;
-    } else if (selectedTabIndex == 1) {
-      filteredApplications = leaveApplications
-          .where((app) => app.status == LeaveStatus.approved)
-          .toList();
-    } else if (selectedTabIndex == 2) {
-      filteredApplications = leaveApplications
-          .where((app) => app.status == LeaveStatus.pending)
-          .toList();
-    } else if (selectedTabIndex == 3) {
-      filteredApplications = leaveApplications
-          .where((app) => app.status == LeaveStatus.rejected)
-          .toList();
-    }
-  }
+    try {
+      final response = await _leaveRepo.getMyLeaves();
 
-  void _navigateToAddLeave() async {
-    // Navigate to AddLeave page and wait for result
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddLeavePage(),
-      ),
-    );
-    
-    // Check if result contains success data
-    if (result != null && result is Map<String, dynamic> && result['success'] == true) {
-      // Show success dialog on Leave page
-      _showSuccessDialog(
-        title: 'Leave has been set',
-        message: result['details'] ?? 'Leave application submitted successfully',
-      );
-      
-      // Refresh the leave data
+      if (response['success'] == true) {
+        final leaves = (response['leaves'] as List)
+            .map((json) => LeaveModel.fromJson(json))
+            .toList();
+
+        _calculateStatistics(leaves);
+
+        setState(() {
+          _allLeaves = leaves;
+          _updateFilteredApplications();
+        });
+      } else {
+        setState(() {
+          _errorMessage = response['message'] ?? 'Failed to load leave data';
+        });
+      }
+    } catch (e) {
       setState(() {
-        // You can add new leave data here or refresh from API
-        _initializeLeaveData();
-        _updateFilteredApplications();
+        _errorMessage = 'Error: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
       });
     }
   }
 
-  void _showSuccessDialog({required String title, required String message}) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return CustomSuccessDialog(
-          title: title,
-          message: message,
-          onOkayPressed: () {
-            // Dialog will be dismissed automatically
-            // You can add any additional actions here
-          },
-        );
-      },
+  void _calculateStatistics(List<LeaveModel> leaves) {
+    setState(() {
+      _totalLeaves = leaves.length;
+      _pendingLeaves = leaves.where((l) => l.status == 'pending').length;
+      _approvedLeaves = leaves.where((l) => l.status == 'approved').length;
+      _rejectedLeaves = leaves.where((l) => l.status == 'rejected').length;
+    });
+  }
+
+  void _updateFilteredApplications() {
+    if (selectedTabIndex == 0) {
+      _filteredLeaves = _allLeaves;
+    } else if (selectedTabIndex == 1) {
+      _filteredLeaves =
+          _allLeaves.where((l) => l.status == 'approved').toList();
+    } else if (selectedTabIndex == 2) {
+      _filteredLeaves = _allLeaves.where((l) => l.status == 'pending').toList();
+    } else if (selectedTabIndex == 3) {
+      _filteredLeaves =
+          _allLeaves.where((l) => l.status == 'rejected').toList();
+    }
+  }
+
+  void _onTabChanged(int index) {
+    setState(() {
+      selectedTabIndex = index;
+      _updateFilteredApplications();
+    });
+  }
+
+  void _navigateToAddLeave() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddLeavePage()),
     );
+
+    if (result != null &&
+        result is Map<String, dynamic> &&
+        result['success'] == true) {
+      _loadLeaveData(); // Refresh data setelah menambahkan cuti baru
+    }
   }
 
   @override
@@ -142,7 +138,7 @@ class _LeavePageState extends State<LeavePage> {
         leadingWidth: 100,
         actions: [
           IconButton(
-            onPressed: _navigateToAddLeave,
+            onPressed: () => _navigateToAddLeave(),
             icon: Container(
               width: 32,
               height: 32,
@@ -160,163 +156,170 @@ class _LeavePageState extends State<LeavePage> {
           const SizedBox(width: 16),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Leave Status Section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Leave status',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Statistics Row 1
-                Row(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+              ? Center(child: Text(_errorMessage!))
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildStatCard(
-                      'Total leave',
-                      totalLeave.toString(),
-                      Colors.grey,
-                      colorScheme,
-                      textTheme,
+                    // Leave Status Section
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Leave status',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Statistics Row 1
+                          Row(
+                            children: [
+                              _buildStatCard(
+                                'Total leave',
+                                _totalLeaves,
+                                Colors.grey,
+                                colorScheme,
+                                textTheme,
+                              ),
+                              const SizedBox(width: 12),
+                              _buildStatCard(
+                                'Available',
+                                _availableLeave,
+                                Colors.blue,
+                                colorScheme,
+                                textTheme,
+                              ),
+                              const SizedBox(width: 12),
+                              _buildStatCard(
+                                'Applied',
+                                _totalLeaves,
+                                Colors.cyan,
+                                colorScheme,
+                                textTheme,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // Statistics Row 2
+                          Row(
+                            children: [
+                              _buildStatCard(
+                                'Approved',
+                                _approvedLeaves,
+                                Colors.green,
+                                colorScheme,
+                                textTheme,
+                              ),
+                              const SizedBox(width: 12),
+                              _buildStatCard(
+                                'Pending',
+                                _pendingLeaves,
+                                Colors.orange,
+                                colorScheme,
+                                textTheme,
+                              ),
+                              const SizedBox(width: 12),
+                              _buildStatCard(
+                                'Rejected',
+                                _rejectedLeaves,
+                                Colors.red,
+                                colorScheme,
+                                textTheme,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    _buildStatCard(
-                      'Available',
-                      availableLeave.toString(),
-                      Colors.blue,
-                      colorScheme,
-                      textTheme,
-                    ),
-                    const SizedBox(width: 12),
-                    _buildStatCard(
-                      'Applied',
-                      appliedLeave.toString(),
-                      Colors.cyan,
-                      colorScheme,
-                      textTheme,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // Statistics Row 2
-                Row(
-                  children: [
-                    _buildStatCard(
-                      'Approved',
-                      approvedLeave.toString(),
-                      Colors.green,
-                      colorScheme,
-                      textTheme,
-                    ),
-                    const SizedBox(width: 12),
-                    _buildStatCard(
-                      'Pending',
-                      pendingLeave.toString(),
-                      Colors.orange,
-                      colorScheme,
-                      textTheme,
-                    ),
-                    const SizedBox(width: 12),
-                    _buildStatCard(
-                      'Rejected',
-                      rejectedLeave.toString(),
-                      Colors.red,
-                      colorScheme,
-                      textTheme,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
 
-          // Filter Tabs
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: tabs.asMap().entries.map((entry) {
-                  int index = entry.key;
-                  String tab = entry.value;
-                  bool isSelected = selectedTabIndex == index;
-                  
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedTabIndex = index;
-                          _updateFilteredApplications();
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 13,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected 
-                              ? const Color(0xFF4285F4).withOpacity(0.2)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(25),
-                          border: Border.all(
-                            color: isSelected 
-                                ? const Color(0xFF4285F4).withOpacity(0.2)
-                                : colorScheme.outline.withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          tab,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: isSelected 
-                                ? Colors.blue
-                                : colorScheme.onSurface.withOpacity(0.4),
-                            fontWeight: FontWeight.w400,
-                          ),
+                    // Filter Tabs
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: tabs.asMap().entries.map((entry) {
+                            int index = entry.key;
+                            String tab = entry.value;
+                            bool isSelected = selectedTabIndex == index;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: GestureDetector(
+                                onTap: () => _onTabChanged(index),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 13,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? const Color(0xFF4285F4)
+                                            .withOpacity(0.2)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(25),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? const Color(0xFF4285F4)
+                                              .withOpacity(0.2)
+                                          : colorScheme.outline
+                                              .withOpacity(0.2),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    tab,
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: isSelected
+                                          ? Colors.blue
+                                          : colorScheme.onSurface
+                                              .withOpacity(0.4),
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
 
-          const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-          // Leave Applications List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 18.0),
-              itemCount: filteredApplications.length,
-              itemBuilder: (context, index) {
-                final application = filteredApplications[index];
-                return _buildLeaveApplicationCard(
-                  application,
-                  colorScheme,
-                  textTheme,
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+                    // Leave Applications List
+                    Expanded(
+                      child: _filteredLeaves.isEmpty
+                          ? const Center(
+                              child: Text('No leave applications found'))
+                          : ListView.builder(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 18.0),
+                              itemCount: _filteredLeaves.length,
+                              itemBuilder: (context, index) {
+                                final application = _filteredLeaves[index];
+                                return _buildLeaveApplicationCard(
+                                  application,
+                                  colorScheme,
+                                  textTheme,
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
     );
   }
 
   Widget _buildStatCard(
     String title,
-    String value,
+    int value, // Ubah parameter menjadi int
     Color indicatorColor,
     ColorScheme colorScheme,
     TextTheme textTheme,
@@ -365,7 +368,7 @@ class _LeavePageState extends State<LeavePage> {
                         bottom: 0,
                         right: 0,
                         child: Text(
-                          value,
+                          value.toString(),
                           style: textTheme.headlineLarge?.copyWith(
                             color: indicatorColor,
                             fontWeight: FontWeight.w600,
@@ -385,7 +388,7 @@ class _LeavePageState extends State<LeavePage> {
   }
 
   Widget _buildLeaveApplicationCard(
-    LeaveApplication application,
+    LeaveModel application,
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
@@ -393,22 +396,26 @@ class _LeavePageState extends State<LeavePage> {
     String statusText;
     Color statusBackgroundColor;
 
-    switch (application.status) {
-      case LeaveStatus.approved:
+    switch (application.status.toLowerCase()) {
+      case 'approved':
         statusColor = Colors.white;
         statusText = 'Approved';
-        statusBackgroundColor = Color(0xFF2EC22B);
+        statusBackgroundColor = const Color(0xFF2EC22B);
         break;
-      case LeaveStatus.pending:
+      case 'pending':
         statusColor = Colors.white;
         statusText = 'Pending';
-        statusBackgroundColor = Color(0xFFFFBF2B);
+        statusBackgroundColor = const Color(0xFFFFBF2B);
         break;
-      case LeaveStatus.rejected:
+      case 'rejected':
         statusColor = Colors.white;
         statusText = 'Rejected';
         statusBackgroundColor = Colors.red;
         break;
+      default:
+        statusColor = Colors.black;
+        statusText = application.status;
+        statusBackgroundColor = Colors.grey;
     }
 
     return Container(
@@ -435,7 +442,7 @@ class _LeavePageState extends State<LeavePage> {
               ),
               const SizedBox(width: 12),
               Text(
-                application.date,
+                DateFormat('MMM dd, yyyy').format(application.startDate),
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: colorScheme.onSurface,
@@ -475,7 +482,7 @@ class _LeavePageState extends State<LeavePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      application.leaveType,
+                      _leaveRepo.formatLeaveType(application.type),
                       style: textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: colorScheme.onSurface,
@@ -496,7 +503,7 @@ class _LeavePageState extends State<LeavePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      application.appliedDays,
+                      '${application.leaveDuration} days',
                       style: textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: colorScheme.onSurface,
@@ -517,7 +524,11 @@ class _LeavePageState extends State<LeavePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      application.approvedBy,
+                      application.status == 'approved'
+                          ? application.approverName
+                          : application.status == 'rejected'
+                              ? application.approverName
+                              : '-', // Untuk pending dan status lainnya
                       style: textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: colorScheme.onSurface,
@@ -525,7 +536,11 @@ class _LeavePageState extends State<LeavePage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Approved by',
+                      application.status == 'approved'
+                          ? 'Approved by'
+                          : application.status == 'rejected'
+                              ? 'Rejected by'
+                              : 'Approved by',
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurface.withOpacity(0.6),
                       ),
@@ -542,30 +557,30 @@ class _LeavePageState extends State<LeavePage> {
 }
 
 // Data Models
-enum LeaveStatus { approved, pending, rejected }
+// enum LeaveStatus { approved, pending, rejected }
 
-class LeaveApplication {
-  final String date;
-  final String leaveType;
-  final String appliedDays;
-  final String approvedBy;
-  final LeaveStatus status;
+// class LeaveApplication {
+//   final String date;
+//   final String leaveType;
+//   final String appliedDays;
+//   final String approvedBy;
+//   final LeaveStatus status;
 
-  LeaveApplication({
-    required this.date,
-    required this.leaveType,
-    required this.appliedDays,
-    required this.approvedBy,
-    required this.status,
-  });
-}
+//   LeaveApplication({
+//     required this.date,
+//     required this.leaveType,
+//     required this.appliedDays,
+//     required this.approvedBy,
+//     required this.status,
+//   });
+// }
 
 // CustomSuccessDialog - Move this to Leave page or create a shared widget
 class CustomSuccessDialog extends StatelessWidget {
   final String title;
   final String message;
   final VoidCallback? onOkayPressed;
-  
+
   const CustomSuccessDialog({
     super.key,
     required this.title,
@@ -599,7 +614,7 @@ class CustomSuccessDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Title
             Text(
               title,
@@ -611,7 +626,7 @@ class CustomSuccessDialog extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            
+
             // Message
             Text(
               message,
@@ -624,7 +639,7 @@ class CustomSuccessDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // OK Button
             SizedBox(
               width: double.infinity,
@@ -657,5 +672,20 @@ class CustomSuccessDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+String _getStatusText(String status) {
+  switch (status.toLowerCase()) {
+    case 'approved':
+      return 'Approved';
+    case 'pending':
+      return 'Pending';
+    case 'rejected':
+      return 'Rejected';
+    case 'cancelled':
+      return 'Cancelled';
+    default:
+      return status;
   }
 }

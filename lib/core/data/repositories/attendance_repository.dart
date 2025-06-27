@@ -341,7 +341,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       };
     }
   }
-
+  
   @override
   Future<Map<String, dynamic>> getAttendanceHistory({
     DateTime? startDate,

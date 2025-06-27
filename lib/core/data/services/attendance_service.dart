@@ -141,7 +141,7 @@ class AttendanceService {
     required DateTime waktu,
   }) async {
     try {
-      final response = await _dio.post('/attendance/clock-out', data: {
+      final response = await _dio.post('/attendances/clock-out', data: {
         'latitude': latitude,
         'longitude': longitude,
         'waktu': DateFormat('yyyy-MM-dd H:mm:ss').format(waktu),

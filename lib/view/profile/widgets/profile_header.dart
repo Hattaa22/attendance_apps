@@ -98,9 +98,10 @@ class ProfileHeader extends StatelessWidget {
               _buildLoadingTag(),
             ] else if (profileController.error != null) ...[
               _textTag('Error loading profile'),
-            ] else ...[
-              _textTag(profileController.department),
-            ],
+            ] 
+            // else ...[
+            //   _textTag(profileController.department),
+            // ],
           ],
         );
       },
