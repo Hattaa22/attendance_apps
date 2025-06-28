@@ -9,6 +9,7 @@ abstract class DepartmentRepository {
   Future<Map<String, dynamic>> getUsersFromSingleTeam(int teamId);
   Future<Map<String, dynamic>> getDepartmentWithTeams(int departmentId);
   Future<Map<String, dynamic>> getDepartmentStatistics();
+  Future<Map<String, dynamic>> getMeetingList();
   Future<Map<String, dynamic>> createMeeting({
     required String title,
     required String type,
@@ -652,6 +653,54 @@ class DepartmentRepositoryImpl implements DepartmentRepository {
       };
     }
   }
+
+  Future<Map<String, dynamic>> getMeetingList() async {
+  try {
+    if (!await _authRepository.isAuthenticated()) {
+      return {
+        'success': false,
+        'message': 'Please login to view meetings',
+        'requiresLogin': true,
+      };
+    }
+
+    final meeting = await _service.getMeetingList();
+
+    return {
+      'success': true,
+      'meeting': meeting.toJson(),
+      'message': 'Meetings loaded successfully',
+    };
+  } on UnauthorizedException catch (e) {
+    await _authRepository.handle401();
+    return {
+      'success': false,
+      'message': e.message,
+      'requiresLogin': true,
+      'sessionExpired': true,
+    };
+  } on NetworkException catch (e) {
+    return {
+      'success': false,
+      'message': e.message,
+      'type': 'network',
+      'retryable': true,
+    };
+  } on DepartmentException catch (e) {
+    return {
+      'success': false,
+      'message': e.message,
+      'type': 'department',
+    };
+  } catch (e) {
+    return {
+      'success': false,
+      'message': 'Failed to load meetings',
+      'type': 'unknown',
+      'details': e.toString(),
+    };
+  }
+}
 
   bool isValidDepartmentId(int departmentId) {
     return departmentId > 0;

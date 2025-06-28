@@ -8,6 +8,8 @@ import '../../../widget_global/form_field_one/form_field_one.dart';
 import '../widget/multi_select.dart';
 import '../widget/custom_calendar.dart';
 import '../model/event_data.dart';
+import 'package:get/get.dart';
+import '../controller/department_controller.dart';
 
 class AddMeetingPage extends StatefulWidget {
   const AddMeetingPage({super.key});
@@ -17,14 +19,17 @@ class AddMeetingPage extends StatefulWidget {
 }
 
 class _AddMeetingPageState extends State<AddMeetingPage> {
+  final DepartmentController _departmentController =
+      Get.put(DepartmentController());
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _urlController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
   List<String> _selectedTeamMembers = [];
   DateTime? _selectedDate;
   String? _selectedType;
   String? _selectedDepartment;
-  String? _selectedHeadDepartment;
-  String? _selectedTeamDepartment;
+  List<String> _selectedTeamDepartment = [];
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
 
@@ -33,6 +38,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
     super.initState();
     _titleController.addListener(_onFormChanged);
     _descriptionController.addListener(_onFormChanged);
+    _departmentController.loadDepartments();
   }
 
   void _onFormChanged() {
@@ -43,18 +49,18 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
     bool baseValidation = _titleController.text.isNotEmpty &&
         _selectedType != null &&
         _selectedDepartment != null &&
-        _selectedHeadDepartment != null &&
-        _selectedTeamDepartment != null &&
+        _selectedTeamDepartment.isNotEmpty &&
         _selectedTeamMembers.length == 3 &&
         _selectedDate != null &&
         _startTime != null &&
-        _endTime != null;
+        _endTime != null && 
+        _descriptionController.text.isNotEmpty;
 
-    if (_selectedType == 'Online') {
-      return baseValidation && _descriptionController.text.isNotEmpty;
+    if (_selectedType == 'online') {
+      return baseValidation && _urlController.text.isNotEmpty;
+    } else {
+      return baseValidation && _locationController.text.isNotEmpty;
     }
-
-    return baseValidation;
   }
 
   void _setMeeting(BuildContext context, String type) {
@@ -62,10 +68,10 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => CustomSuccessDialog(
-        title: type == 'Online'
+        title: type == 'online'
             ? 'Online Meeting has been set!'
             : 'Offline Meeting has been set!',
-        message: type == 'Online'
+        message: type == 'online'
             ? 'Departement team member will receive an email containing the meeting details and a link to join the online session.'
             : 'You will receive a notification as a reminder of the meeting’s time and physical location.',
       ),
@@ -380,7 +386,7 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
               CustomDropdownFormField(
                 hint: 'Select',
                 value: _selectedType,
-                items: ['Online', 'Offline'],
+                items: ['online', 'offline'],
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedType = newValue;
@@ -395,16 +401,25 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              CustomDropdownFormField(
-                hint: 'Select',
-                value: _selectedDepartment,
-                items: ['IT', 'HRD', 'Marketing', 'Finance'],
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedDepartment = newValue;
-                  });
-                },
-              ),
+              Obx(() => CustomDropdownFormField(
+                    hint: 'Select',
+                    value: _selectedDepartment,
+                    items: _departmentController.departments
+                        .map((d) => d.department)
+                        .toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedDepartment = newValue;
+                        final selected = _departmentController.departments
+                            .firstWhere((d) => d.department == newValue);
+                        _departmentController.selectDepartment(selected);
+                        _selectedTeamDepartment = [];
+                        _selectedTeamMembers = [];
+                        _departmentController.teamDepartments.clear();
+                        _departmentController.teamUsers.clear();
+                      });
+                    },
+                  )),
 
               const SizedBox(height: 16),
 
@@ -413,16 +428,27 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              CustomDropdownFormField(
-                hint: 'Select',
-                value: _selectedHeadDepartment,
-                items: ['Head Department'],
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedHeadDepartment = newValue;
-                  });
-                },
-              ),
+              Obx(() {
+                final selectedDept = _departmentController.departments
+                    .firstWhereOrNull(
+                        (d) => d.department == _selectedDepartment);
+                final headName = selectedDept?.managerDepartment ?? '-';
+                return Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: greyMainColor),
+                  ),
+                  child: Text(
+                    headName,
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                );
+              }),
 
               const SizedBox(height: 16),
 
@@ -431,16 +457,27 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              CustomDropdownFormField(
-                hint: 'Select',
-                value: _selectedTeamDepartment,
-                items: ['Team Adit', 'Team Denis'],
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedTeamDepartment = newValue;
-                  });
-                },
-              ),
+              Obx(() => CustomMultiSelect(
+                    whenEmpty: 'Select Team Departments',
+                    options: _departmentController.teamDepartments
+                        .map((team) => team.name)
+                        .toList(),
+                    selectedValues: _selectedTeamDepartment,
+                    onChanged: (values) {
+                      setState(() {
+                        _selectedTeamDepartment = values;
+                        // Ambil semua team yang dipilih
+                        final selectedTeams = _departmentController
+                            .teamDepartments
+                            .where((d) => values.contains(d.name))
+                            .toList();
+                        // Panggil controller untuk load user dari semua team yang dipilih
+                        _departmentController.selectTeams(selectedTeams);
+                        // Reset pilihan user jika tim berubah
+                        _selectedTeamMembers = [];
+                      });
+                    },
+                  )),
 
               const SizedBox(height: 16),
 
@@ -449,19 +486,26 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              CustomMultiSelect(
-                options: const [
-                  'Adit', 'Denis', 'Budi', 'Joko', 'Joni', 'Jono', 'Jone'
-                ],
-                selectedValues: _selectedTeamMembers,
-                onChanged: (values) {
-                  setState(() {
-                    _selectedTeamMembers = values;
-                  });
-                },
-                whenEmpty: 'Select team members (max 3)',
-                maxSelection: 3,
-              ),
+              Obx(() => CustomMultiSelect(
+                    options: _departmentController.teamUsers
+                        .map((user) => user.name)
+                        .toList(),
+                    selectedValues: _selectedTeamMembers,
+                    onChanged: (values) {
+                      setState(() {
+                        _selectedTeamMembers = values;
+                        // Ambil user yang dipilih berdasarkan nama
+                        final selectedUsers = _departmentController.teamUsers
+                            .where((user) =>
+                                _selectedTeamMembers.contains(user.name))
+                            .toList();
+                        _departmentController.selectedUsers
+                            .assignAll(selectedUsers);
+                      });
+                    },
+                    whenEmpty: 'Select team members (max 3)',
+                    maxSelection: 3,
+                  )),
 
               const SizedBox(height: 16),
 
@@ -547,25 +591,57 @@ class _AddMeetingPageState extends State<AddMeetingPage> {
                 ],
               ),
 
-              // Description (only show if Online is selected, at the bottom)
-              if (_selectedType == 'Online') ...[
-                const SizedBox(height: 16),
+              const SizedBox(height: 16),
+              if (_selectedType == 'online')
                 FormFieldOne(
-                  controller: _descriptionController,
-                  labelText: 'Description',
-                  hintText: 'Add a link or description',
+                  controller: _urlController,
+                  labelText: 'Link/URL',
+                  hintText: 'Add a link/url for online meeting',
                   maxLines: 3,
                   onChanged: (value) => _onFormChanged(),
-                ),
-              ],
+                )
+              else if (_selectedType == 'offline')
+                FormFieldOne(
+                  controller: _locationController,
+                  labelText: 'Location',
+                  hintText: 'Add a location for offline meeting',
+                  onChanged: (value) => _onFormChanged(),
+                )
+              else
+                const SizedBox.shrink(),
+              const SizedBox(height: 16),
+              FormFieldOne(
+                controller: _descriptionController,
+                labelText: 'Description',
+                hintText: 'Add description ',
+                maxLines: 3,
+                onChanged: (value) => _onFormChanged(),
+              ),
               const SizedBox(height: 22),
               CustomButton(
                 text: 'Set Meeting',
                 isEnabled: _isFormValid(),
                 onPressed: _isFormValid()
-                    ? () {
-                        Navigator.of(context).pop();
-                        _setMeeting(context, _selectedType ?? '');
+                    ? () async {
+                        final result =
+                            await _departmentController.createMeeting(
+                          title: _titleController.text,
+                          type: _selectedType!,
+                          date: _selectedDate!,
+                          startTime: _startTime!,
+                          endTime: _endTime!,
+                          description: _descriptionController.text,
+                          onlineUrl: _selectedType == 'online'
+                              ? _urlController.text
+                              : null,
+                          location: _selectedType == 'offline'
+                              ? _locationController.text
+                              : null,
+                        );
+                        if (result['success']) {
+                          Navigator.of(context).pop();
+                          _setMeeting(context, _selectedType ?? '');
+                        }
                       }
                     : null,
               )

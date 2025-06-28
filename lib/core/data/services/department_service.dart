@@ -207,4 +207,72 @@ class DepartmentService {
       throw DepartmentException('Failed to create meeting: $e');
     }
   }
+
+  Future<MeetingModel> getMeetingList() async {
+    try {
+      final response = await _dio
+          .get('/meetings')
+          .timeout(Duration(seconds: 10));
+
+      if (response.data == null) {
+        throw DepartmentException('Empty response from server');
+      }
+
+      return MeetingModel.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw UnauthorizedException(
+            e.response?.data['message'] ?? 'Unauthorized access');
+      } else if (e.response?.statusCode == 404) {
+        throw DepartmentException('Meeting not found');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('Unable to connect to server');
+      }
+
+      throw DepartmentException(
+          e.response?.data['message'] ?? 'Failed to get meeting details');
+    } catch (e) {
+      if (e is UnauthorizedException || e is NetworkException) {
+        rethrow;
+      }
+      throw DepartmentException('Failed to get meeting details: $e');
+    }
+  }
+
+  Future<MeetingModel> getMeetingDetails(int meetingId) async {
+    try {
+      final response = await _dio
+          .get('/meetings/$meetingId')
+          .timeout(Duration(seconds: 10));
+
+      if (response.data == null) {
+        throw DepartmentException('Empty response from server');
+      }
+
+      return MeetingModel.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw UnauthorizedException(
+            e.response?.data['message'] ?? 'Unauthorized access');
+      } else if (e.response?.statusCode == 404) {
+        throw DepartmentException('Meeting not found');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Connection timeout');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException('Unable to connect to server');
+      }
+
+      throw DepartmentException(
+          e.response?.data['message'] ?? 'Failed to get meeting details');
+    } catch (e) {
+      if (e is UnauthorizedException || e is NetworkException) {
+        rethrow;
+      }
+      throw DepartmentException('Failed to get meeting details: $e');
+    }
+  }
 }
