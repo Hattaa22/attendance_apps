@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/color/colors.dart';
@@ -8,6 +9,7 @@ import '../model/event_utils.dart';
 import '../widget/custom_calendar.dart';
 import '../widget/event_details_dialog.dart';
 import '../model/event_data.dart';
+import '../controller/meeting_controller.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -16,6 +18,7 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
+  final MeetingController meetingController = Get.put(MeetingController());
   late final Map<DateTime, List<Event>> _events;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();

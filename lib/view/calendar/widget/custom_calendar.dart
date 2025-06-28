@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/color/colors.dart';
 import '../model/event.dart';
 import '../model/event_utils.dart';
+import '../../../core/data/models/meeting_model.dart';
 
 class CustomCalendar extends StatelessWidget {
   final DateTime focusedDay;
@@ -24,8 +25,8 @@ class CustomCalendar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TableCalendar<Event>(
-      firstDay: DateTime(2025, 1, 1),
-      lastDay: DateTime(2025, 12, 31),
+      firstDay: DateTime(DateTime.now().year, 1, 1),
+      lastDay: DateTime(DateTime.now().year, 12, 31),
       focusedDay: focusedDay,
       selectedDayPredicate: (day) => isSameDay(day, selectedDay),
       rowHeight: 40,
@@ -129,7 +130,7 @@ class CustomCalendar extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.chevron_left),
                     onPressed: () {
-                      if (focusedDay.isAfter(DateTime(2025, 1, 1))) {
+                      if (focusedDay.isAfter(DateTime(DateTime.now().year, 1, 1))) {
                         onDaySelected(
                           selectedDay,
                           DateTime(focusedDay.year, focusedDay.month - 1),
@@ -140,7 +141,7 @@ class CustomCalendar extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.chevron_right),
                     onPressed: () {
-                      if (focusedDay.isBefore(DateTime(2025, 12, 1))) {
+                      if (focusedDay.isBefore(DateTime(DateTime.now().year, 12, 1))) {
                         onDaySelected(
                           selectedDay,
                           DateTime(focusedDay.year, focusedDay.month + 1),
