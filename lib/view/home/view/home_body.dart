@@ -7,6 +7,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../controller/home_controller.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 import 'dart:async';
 
@@ -35,23 +37,68 @@ class _HomeBodyContent extends StatefulWidget {
 }
 
 class _HomeBodyContentState extends State<_HomeBodyContent> {
-  final String userName = "sawaw";
-  final String location = "Malang, East Java";
+  final HomeController homeController = HomeController();
+
+  Position? _currentLocation;
+  late bool servicePermission = false;
+  late LocationPermission permission;
+
+  String currentAdress = "";
+
+  Future<Position> _getCurrentLocation() async {
+    servicePermission = await Geolocator.isLocationServiceEnabled();
+    if (!servicePermission) {
+      debugPrint("service disabled");
+    }
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+  }
+
+  _getAdressFromCoordinates() async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+          _currentLocation!.latitude, _currentLocation!.longitude,
+          localeIdentifier: 'id_ID');
+      Placemark place = placemarks[0];
+
+      setState(() {
+        currentAdress = "${place.locality}, ${place.country}";
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  String userName = '';
+  // final String location = "Malang, East Java";
 
   int selectedYear = DateTime.now().year;
   int selectedMonthIndex = DateTime.now().month;
   String selectedMonth = DateFormat('MMM').format(DateTime.now()).toUpperCase();
 
+  String? clockInTime;
+  String? clockOutTime;
+  String workingHours = '00:00:00';
+  Timer? _workingHoursTimer;
+
   bool isClockedIn = false;
   bool isClockedOut = true;
   bool isReminderActive = false;
 
+  final DateFormat timeFormat = DateFormat('hh:mm a');
+  final DateFormat dateFormat = DateFormat('EEEE dd MMMM yyyy');
   Timer? _timer;
   DateTime _currentTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
+    _initializeLocation();
+    _loadUserProfile();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _currentTime = DateTime.now();
@@ -59,10 +106,47 @@ class _HomeBodyContentState extends State<_HomeBodyContent> {
     });
   }
 
+  void _initializeLocation() async {
+    _currentLocation = await _getCurrentLocation();
+    await _getAdressFromCoordinates();
+  }
+
+  void _loadUserProfile() async {
+    final result = await homeController.loadProfile();
+    if (result['success'] == true && result['profile'] != null) {
+      setState(() {
+        userName = result['profile']['name'] ?? 'User';
+      });
+    }
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
+    _workingHoursTimer?.cancel();
     super.dispose();
+  }
+
+  void _updateWorkingHours() {
+    if (clockInTime == null) return;
+
+    final clockIn = DateTime.parse(clockInTime!);
+    final now =
+        clockOutTime != null ? DateTime.parse(clockOutTime!) : DateTime.now();
+
+    final difference = now.difference(clockIn);
+
+    setState(() {
+      workingHours = _formatDuration(difference);
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String hours = twoDigits(duration.inHours);
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$hours:$minutes:$seconds";
   }
 
   // Menampilkan dialog pilihan metode clock in/out dengan dua opsi tombol:
@@ -180,6 +264,7 @@ class _HomeBodyContentState extends State<_HomeBodyContent> {
 
   // Menampilkan dialog konfirmasi sukses clock in
   void _showSuccessClockInDialog() {
+    final now = DateTime.now();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -215,7 +300,7 @@ class _HomeBodyContentState extends State<_HomeBodyContent> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'You have successfully clocked in at\n08:00 AM on Monday 16 June 2025.\nHave a good day and have a productive\nday!',
+                  'You have successfully clocked in at\n${timeFormat.format(now)} on ${dateFormat.format(now)}.\nHave a good day and have a productive\nday!',
                   style: GoogleFonts.roboto(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -255,6 +340,7 @@ class _HomeBodyContentState extends State<_HomeBodyContent> {
 
   // Menampilkan dialog konfirmasi sukses clock out
   void _showSuccessClockOutDialog() {
+    final now = DateTime.now();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -293,7 +379,7 @@ class _HomeBodyContentState extends State<_HomeBodyContent> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'You have successfully clocked out at\n04:00 PM on Monday 16 June 2025.\nThank you for your hard work today!',
+                  'You have successfully clocked out at\n${timeFormat.format(now)} on ${dateFormat.format(now)}.\nThank you for your hard work today!',
                   style: GoogleFonts.roboto(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -572,30 +658,81 @@ class _HomeBodyContentState extends State<_HomeBodyContent> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.of(context).pop();
-
                         bool wasClockIn = !isClockedIn;
 
-                        setState(() {
-                          if (!isClockedIn) {
-                            isClockedIn = true;
-                            isClockedOut = false;
-                          } else {
-                            // Untuk Clock Out, kembali ke state awal
-                            isClockedIn = false;
-                            isClockedOut = true;
-                          }
-                        });
+                        try {
+                          // Dapatkan posisi saat ini
+                          Position position = await _getCurrentLocation();
+                          final now = DateTime.now();
 
-                        Future.delayed(Duration(milliseconds: 100), () {
-                          // Tampilkan dialog berdasarkan aksi yang dilakukan
-                          if (wasClockIn) {
-                            _showSuccessClockInDialog();
+                          Map<String, dynamic> result;
+
+                          if (!isClockedIn) {
+                            // Proses Clock In
+                            result = await homeController.clockIn(
+                              latitude: position.latitude,
+                              longitude: position.longitude,
+                              waktu: now,
+                            );
                           } else {
-                            _showSuccessClockOutDialog();
+                            // Proses Clock Out
+                            result = await homeController.clockOut(
+                              latitude: position.latitude,
+                              longitude: position.longitude,
+                              waktu: now,
+                            );
                           }
-                        });
+
+                          if (result['success'] == true) {
+                            setState(() {
+                              if (!isClockedIn) {
+                                isClockedIn = true;
+                                isClockedOut = false;
+                                clockInTime = now.toIso8601String();
+
+                                // Start timer for working hours
+                                _workingHoursTimer = Timer.periodic(
+                                    Duration(seconds: 1), (timer) {
+                                  _updateWorkingHours();
+                                });
+                              } else {
+                                isClockedIn = false;
+                                isClockedOut = true;
+                                clockOutTime = now.toIso8601String();
+                                _workingHoursTimer?.cancel();
+                                _updateWorkingHours();
+                              }
+                            });
+
+                            // Tampilkan dialog sukses
+                            Future.delayed(Duration(milliseconds: 100), () {
+                              if (wasClockIn) {
+                                _showSuccessClockInDialog();
+                              } else {
+                                _showSuccessClockOutDialog();
+                              }
+                            });
+                          } else {
+                            // Tampilkan error message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result['message'] ??
+                                    'Failed to process attendance'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          debugPrint('Error processing attendance: $e');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to process attendance: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       },
                       child: Text(
                         'Yes!',
@@ -801,7 +938,7 @@ class _HomeBodyContentState extends State<_HomeBodyContent> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                location,
+                                "${_currentLocation?.longitude}, ${_currentLocation?.latitude}",
                                 style: GoogleFonts.roboto(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -1200,19 +1337,25 @@ class _HomeBodyContentState extends State<_HomeBodyContent> {
                                 children: [
                                   _buildTimeStatusCard(
                                     imagePath: 'assets/icon/Clock_fill.svg',
-                                    time: '08:00 AM',
+                                    time: clockInTime != null
+                                        ? DateFormat('hh:mm a').format(
+                                            DateTime.parse(clockInTime!))
+                                        : '--:--',
                                     label: 'Clock In',
                                     screenWidth: screenWidth,
                                   ),
                                   _buildTimeStatusCard(
                                     imagePath: 'assets/icon/Clock_fill.svg',
-                                    time: '04:00 PM',
+                                    time: clockOutTime != null
+                                        ? DateFormat('hh:mm a').format(
+                                            DateTime.parse(clockOutTime!))
+                                        : '--:--',
                                     label: 'Clock Out',
                                     screenWidth: screenWidth,
                                   ),
                                   _buildTimeStatusCard(
                                     imagePath: 'assets/icon/Clock_fill.svg',
-                                    time: '00:00:00',
+                                    time: workingHours,
                                     label: 'Working Hrs',
                                     screenWidth: screenWidth,
                                   ),

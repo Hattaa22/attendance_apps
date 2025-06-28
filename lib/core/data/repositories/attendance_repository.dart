@@ -271,7 +271,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       final clockInRecord =
           todayRecords.firstWhere((record) => record.type == 'clock-in');
       final workDuration =
-          _calculateWorkDuration(clockInRecord.waktu as String, waktu);
+          _calculateWorkDuration(clockInRecord.waktu, waktu);
 
       return {
         'success': true,
@@ -504,10 +504,10 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   }
 
   Map<String, dynamic> _calculateWorkDuration(
-      String clockInTime, DateTime clockOutTime) {
+      DateTime clockInTime, DateTime clockOutTime) {
     try {
-      final clockIn = DateTime.parse(clockInTime);
-      final duration = clockOutTime.difference(clockIn);
+      // final clockIn = DateTime.parse(clockInTime);
+      final duration = clockOutTime.difference(clockInTime);
 
       return {
         'hours': duration.inHours,
