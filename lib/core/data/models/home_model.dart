@@ -47,18 +47,15 @@ HomeAttendanceStat calculateHomeAttendanceStat(
   int lateIn = 0;
 
   grouped.forEach((dateKey, value) {
-    // Present jika ada clock-in (dan/atau clock-out) di hari itu
     if (value['clock_in'] != null) {
       presents++;
-      // Cek late in
-      final clockInTime = DateTime.tryParse(value['clock_in']);
-      if (clockInTime != null) {
-        // Batas clock in jam 8 pagi
-        final batas = DateTime(
-            clockInTime.year, clockInTime.month, clockInTime.day, 8, 0, 0);
-        if (clockInTime.isAfter(batas)) {
-          lateIn++;
-        }
+      // Parse clockInTime dalam UTC
+      final clockInTime = DateTime.parse(value['clock_in']).toUtc();
+      // Batas jam 8 pagi UTC (harus sama dengan clockInTime)
+      final batas = DateTime.utc(
+          clockInTime.year, clockInTime.month, clockInTime.day, 8, 0, 0);
+      if (clockInTime.isAfter(batas)) {
+        lateIn++;
       }
     }
   });
